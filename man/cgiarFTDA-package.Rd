@@ -1,7 +1,7 @@
-\name{cgiarPIPE-package}
-\alias{cgiarPIPE}
+\name{cgiarPipeline-package}
+\alias{cgiarPipeline}
 \docType{package}
-\title{cgiarPIPE}
+\title{cgiarPipeline}
 \description{
 
 This package has been developed primarily for
