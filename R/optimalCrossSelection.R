@@ -1,0 +1,148 @@
+ocs <- function(
+    phenoDTfile= NULL, # analysis to be picked from predictions database
+    analysisId=NULL,
+    relDTfile= NULL,
+    trait= NULL, # per trait
+    environment="across",
+    nCross=20,
+    targetAngle=30, # in radians
+    verbose=FALSE,
+    maxRun=100,
+    entryType=NULL
+){
+  ## THIS FUNCTION CALCULATES THE OPTIMAL CROSS SELECTION USING A TRAIT AND A RELATIONSHIP MATRIX
+  ## IS USED IN THE BANAL APP UNDER THE GENETIC EVALUATION MODULES
+  ocsAnalysisId <- as.numeric(Sys.time())
+  if(is.null(phenoDTfile)){stop("Please provide the predictions", call. = FALSE)}
+  if(is.null(analysisId)){stop("Please provide the analysisId", call. = FALSE)}
+  if(is.null(relDTfile)){stop("Please provide the type of relationship to be calculated", call. = FALSE)}
+  if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
+  if(length(trait) > 1){stop(paste0(" Only one trait can be used for optimal contribution. We suggest using an index."), call. = FALSE)}
+  if(length(environment) > 1){stop(paste0(" Only one environment can be used for optimal contribution. We suggest using an across environment value."), call. = FALSE)}
+  
+  otherTraits <- setdiff(unique(phenoDTfile$predictions$trait), trait)
+  ############################
+  # loading the dataset
+  mydata <- phenoDTfile$predictions # 
+  mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  if(!is.null(entryType)){
+    mydata <- mydata[which(mydata$entryType %in% entryType),]
+  }
+  
+  if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
+    N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
+  }
+  if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
+    M <- phenoDTfile$data$geno
+    if(is.null(M)){stop("Markers are not available for this dataset. Please upload them.", call. = FALSE)}
+    if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
+      A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
+    }else{ A <- sommer::A.mat(M) };  M <- NULL
+    if(relDTfile == "both"){ # only if ssgblup we merge
+      A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
+    }
+  }
+  if(relDTfile %in% c("nrm")){ A <- N  }
+  myrel <- A
+  
+  utraits <- unique(mydata$trait)
+  if (!trait %in% utraits){
+    stop(paste0("'", trait, "' is not present in the given dataset or the entryType doesn't correspond."), call. = FALSE)
+  }
+  mydata <- mydata[which(mydata$trait %in% trait),]
+  mydata <- mydata[which(mydata$environment %in% environment),] # make sure only across
+  if(nrow(mydata) == 0){stop("Please check the trait and environment selected since there's no phenotypic data for that combination",call. = "FALSE")}
+  # make sure you have same phenotypes and genotypes
+  
+  common <- intersect(rownames(myrel), mydata[,"designation"])
+  if(length(common) == 0){
+    stop("There was no intersection between the IDs in the relationship matrix and the IDs in the phenotypes provided. Please check your input files.",call. = FALSE)
+  }
+  myrel <- myrel[common,common]
+  mydata <- mydata[which(mydata[,"designation"] %in% common),]
+  
+  ############################
+  ## ocs analysis
+  
+  forLoop <- expand.grid(nCross, targetAngle)
+  predictionsBindList <- list()
+  meanCross <- meanFcross <- meanCrossSe <- meanFcrossSe <- numeric()
+  
+  for(iRow in 1:nrow(forLoop)){ # iRow=1
+    
+    ebv <- data.frame(mydata[,c("predictedValue")]); rownames(ebv) <- mydata[,"designation"]
+    ebv <- data.frame(ebv[rownames(myrel),]); rownames(ebv) <- rownames(myrel)
+    crossComb = t(combn(1:nrow(myrel), 2)) # all possible cross combintations
+    eMP = (ebv[crossComb[,1],] +  ebv[crossComb[,2],])/2  # expected EBVs of all crosses based on # mean parent EBVs
+    K <- as.matrix(myrel)
+    # OCS: Determine a crossing plan
+    plan = cgiarOcs::selectCrosses(nCross=forLoop[iRow,1], # number of crossed to be identified using OCS
+                                   targetAngle=((forLoop[iRow,2])*pi)/180, # 30 degrees in radians
+                                   u=eMP, # expected cross mean EBVs
+                                   maxRun=maxRun,
+                                   G=K)   # GRM
+    dim(plan$crossPlan)
+    
+    crossPlan <- as.data.frame(plan$crossPlan) # list of crosses to be made already sorted by best
+    crossPlan[ ,1] <- rownames(K)[crossPlan[ ,1]]
+    crossPlan[ ,2] <- rownames(K)[crossPlan[ ,2]]
+    colnames(crossPlan) <- c("Parent1", "Parent2", "OCS.merit")
+    eMPsel = (ebv[crossPlan[ ,1],] +     # expected EBVs of selected crosses based on
+                ebv[crossPlan[ ,2],])/2  # mean parent EBVs
+    inbreeding = diag(K)
+    inbreedingSel = (inbreeding[crossPlan[ ,1]] + inbreeding[crossPlan[ ,2]])/2
+    
+    predictionsBindList[[iRow]] <- data.frame(module="ocs",analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
+                                              trait=trait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
+                                              mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross",
+                                              environment=environment, predictedValue=eMPsel, stdError=inbreedingSel, reliability=crossPlan[,3]
+    )
+    
+    meanCross[iRow] <- mean(eMPsel)
+    meanFcross[iRow] <- mean(inbreedingSel)
+    meanCrossSe[iRow] <- sd(eMPsel)/sqrt(length(eMPsel))
+    meanFcrossSe[iRow] <- sd(inbreedingSel)/sqrt(length(inbreedingSel))
+    
+    modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=iTrait, environment=environment, 
+                           parameter= "ocsFormula", value= paste(iTrait,"~", paste(forLoop[iRow,1],"crosses *",forLoop[iRow,2], "degrees"))
+    )
+    phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+    
+    if(length(otherTraits) > 0){ # if there's more traits in the file, add the value of the crosses for those traits
+      traitPredictions <- list()
+      for(iTrait in otherTraits){ # iTrait <- otherTraits[1]
+        
+        provPredictions <- phenoDTfile$predictions
+        provPredictions <- provPredictions[which(provPredictions$analysisId %in% analysisId),]
+        if(!is.null(entryType)){
+          provPredictions <- provPredictions[which(provPredictions$entryType %in% entryType),]
+        }
+        provPredictions <- provPredictions[which(provPredictions$trait == iTrait), ]
+        provPredictions <- provPredictions[which(provPredictions[,"designation"] %in% common),]
+        ebv2 <- data.frame(provPredictions[,c("predictedValue")]); rownames(ebv2) <- provPredictions[,"designation"]
+        eMPtrait = (ebv2[crossPlan[ ,1],] +  ebv2[crossPlan[ ,2],])/2  #
+        
+        traitPredictions[[iTrait]] <- data.frame(module="ocs",  analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
+                                                   trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
+                                                   mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross",
+                                                   environment=environment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
+        )
+        
+      }
+      predictionsBindList[[iRow]] <- rbind(predictionsBindList[[iRow]], do.call(rbind, traitPredictions))
+    }
+  }
+  
+  predictionsBind <- do.call(rbind, predictionsBindList)
+  
+  #########################################
+  ## update structure
+  setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
+  phenoDTfile$predictions <- rbind(predictionsBind, phenoDTfile$predictions[, colnames(phenoDTfile$predictions)])
+  metrics <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=environment, 
+                        parameter= c(rep("meanValue",length(meanCross)), rep("meanF",length(meanFcross)) ),method= "sum/n", value=c(meanCross,meanFcross),
+                        stdError=c(meanCrossSe,meanFcrossSe)  )
+  phenoDTfile$metrics <- rbind(phenoDTfile$metrics, metrics[, colnames(phenoDTfile$metrics)])
+
+  return(phenoDTfile)
+}
