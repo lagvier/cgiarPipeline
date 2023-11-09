@@ -220,6 +220,7 @@ staLMM <- function(
                     pp$reliability <- diag(R2)
                     pp$predictedValue <- pp$predictedValue/pp$reliability
                     badRels <- which(pp$reliability > 1); if(length(badRels) > 0){pp$reliability[badRels] <- 0.9999}
+                    badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
                     predictionsList[[counter]] <- pp
                     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                  data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField, 
@@ -272,7 +273,7 @@ staLMM <- function(
                   R2 = (G - pev)/G
                   pp$reliability <- diag(R2)
                   badRels <- which(pp$reliability > 1); if(length(badRels) > 0){pp$reliability[badRels] <- 0.9999}
-                  
+                  badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
                   phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField, 
                                                           parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), 

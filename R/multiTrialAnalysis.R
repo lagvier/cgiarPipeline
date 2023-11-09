@@ -355,6 +355,8 @@ metLMM <- function(
                 pev <- xx2$Lam %*% pev %*% t(xx2$Lam) 
                 stdError <- (sqrt(Matrix::diag(pev)))
                 reliability <- 1 - (stdError/as.numeric(var(predictedValue)))
+                badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
+                badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
                 pp[[iGroup]] <- data.frame(designation=rownames(predictedValue), predictedValue=predictedValue, stdError=stdError, reliability=reliability,
                                            trait=paste0(iTrait,"_",iGroup) )
                 ## save metrics
@@ -470,6 +472,7 @@ metLMM <- function(
                 # print(names(genEva))
                 pp$reliability <- genEva$designation$R2
                 badRels <- which(pp$reliability > 1); if(length(badRels) > 0){pp$reliability[badRels] <- 0.9999}
+                badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
               }
               pp$trait <- iTrait # add trait
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
