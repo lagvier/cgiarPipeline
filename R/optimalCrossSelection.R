@@ -103,8 +103,8 @@ ocs <- function(
     meanCrossSe[iRow] <- sd(eMPsel)/sqrt(length(eMPsel))
     meanFcrossSe[iRow] <- sd(inbreedingSel)/sqrt(length(inbreedingSel))
     
-    modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=iTrait, environment=environment, 
-                           parameter= "ocsFormula", value= paste(iTrait,"~", paste(forLoop[iRow,1],"crosses *",forLoop[iRow,2], "degrees"))
+    modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=environment, 
+                           parameter= "ocsFormula", value= paste(trait,"~", paste(forLoop[iRow,1],"crosses *",forLoop[iRow,2], "degrees"))
     )
     phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
     
