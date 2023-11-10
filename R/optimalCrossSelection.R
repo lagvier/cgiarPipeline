@@ -143,6 +143,6 @@ ocs <- function(
                         parameter= c(rep("meanValue",length(meanCross)), rep("meanF",length(meanFcross)) ),method= "sum/n", value=c(meanCross,meanFcross),
                         stdError=c(meanCrossSe,meanFcrossSe)  )
   phenoDTfile$metrics <- rbind(phenoDTfile$metrics, metrics[, colnames(phenoDTfile$metrics)])
-
+  phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="ocs", analysisId=ocsAnalysisId))
   return(phenoDTfile)
 }
