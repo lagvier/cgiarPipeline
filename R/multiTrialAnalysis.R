@@ -31,6 +31,7 @@ metLMM <- function(
   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions #
+  if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
@@ -609,6 +610,9 @@ metLMM <- function(
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
-
+  ## add which data was used as input
+  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait="inputObject", environment="general", 
+                         parameter= "analysisId", value= analysisId)
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }

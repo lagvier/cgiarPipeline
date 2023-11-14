@@ -91,22 +91,22 @@ ocs <- function(
                 ebv[crossPlan[ ,2],])/2  # mean parent EBVs
     inbreeding = diag(K)
     inbreedingSel = (inbreeding[crossPlan[ ,1]] + inbreeding[crossPlan[ ,2]])/2
-    
+    treatment <- paste(trait,"~", paste(forLoop[iRow,1],"crosses *",forLoop[iRow,2], "degrees"))
     predictionsBindList[[iRow]] <- data.frame(module="ocs",analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
                                               trait=trait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
                                               mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross",
-                                              environment=environment, predictedValue=eMPsel, stdError=inbreedingSel, reliability=crossPlan[,3]
+                                              environment=treatment, predictedValue=eMPsel, stdError=inbreedingSel, reliability=crossPlan[,3]
     )
-    
-    meanCross[iRow] <- mean(eMPsel)
-    meanFcross[iRow] <- mean(inbreedingSel)
-    meanCrossSe[iRow] <- sd(eMPsel)/sqrt(length(eMPsel))
-    meanFcrossSe[iRow] <- sd(inbreedingSel)/sqrt(length(inbreedingSel))
-    
+    # bind modeling for this treatment
     modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=environment, 
-                           parameter= "ocsFormula", value= paste(trait,"~", paste(forLoop[iRow,1],"crosses *",forLoop[iRow,2], "degrees"))
+                           parameter= "ocsFormula", value= treatment
     )
     phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+    # bind metric for this treatment
+    metrics <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=treatment, 
+                          parameter= c("meanValue","meanF"),method= "sum/n", value=c(mean(eMPsel),mean(inbreedingSel)),
+                          stdError=c(sd(eMPsel)/sqrt(length(eMPsel)) ,  sd(inbreedingSel)/sqrt(length(inbreedingSel)) )  )
+    phenoDTfile$metrics <- rbind(phenoDTfile$metrics, metrics[, colnames(phenoDTfile$metrics)])
     
     if(length(otherTraits) > 0){ # if there's more traits in the file, add the value of the crosses for those traits
       traitPredictions <- list()
@@ -139,10 +139,10 @@ ocs <- function(
   ## update structure
   setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
   phenoDTfile$predictions <- rbind(predictionsBind, phenoDTfile$predictions[, colnames(phenoDTfile$predictions)])
-  metrics <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=environment, 
-                        parameter= c(rep("meanValue",length(meanCross)), rep("meanF",length(meanFcross)) ),method= "sum/n", value=c(meanCross,meanFcross),
-                        stdError=c(meanCrossSe,meanFcrossSe)  )
-  phenoDTfile$metrics <- rbind(phenoDTfile$metrics, metrics[, colnames(phenoDTfile$metrics)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="ocs", analysisId=ocsAnalysisId))
+  ## add which data was used as input
+  modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait="inputObject", environment="general", 
+                         parameter= "analysisId", value= analysisId)
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }

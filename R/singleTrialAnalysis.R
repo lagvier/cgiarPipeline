@@ -20,8 +20,8 @@ staLMM <- function(
   '%!in%' <- function(x,y)!('%in%'(x,y)) 
   ###################################
   # loading the dataset
-  if (is.null(phenoDTfile)) stop("No input phenotypic data file specified.")
   mydata <- phenoDTfile$data$pheno # extract relevant data for sta
+  if (nrow(mydata) < 2) stop("Not enough phenotypic data is available to perform a single trial analysis. Please add the phenotypic data to your data object.", call. = FALSE)
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   mydata$rowindex <- 1:nrow(mydata)
   myped <- phenoDTfile$data$pedigree
@@ -385,6 +385,5 @@ staLMM <- function(
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)] )
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="sta", analysisId=staAnalysisId))
   phenoDTfile$data$pheno <- mydata[,-which(colnames(mydata) %in% c("mother","father") )]
-  
   return(phenoDTfile)
 }
