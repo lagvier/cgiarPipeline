@@ -26,8 +26,12 @@ staLMM <- function(
   mydata$rowindex <- 1:nrow(mydata)
   myped <- phenoDTfile$data$pedigree
   # merge mother and father information
-  mydata <- merge(mydata, myped, by="designation", all.x = TRUE)
-  mydata <- mydata[with(mydata, order(rowindex)), ]
+  if(!is.null(myped)){
+    if(nrow(myped) > 0){
+      mydata <- merge(mydata, myped, by="designation", all.x = TRUE)
+      mydata <- mydata[with(mydata, order(rowindex)), ]
+    }else{mydata$mother <- NA; mydata$father <- NA}
+  }else{mydata$mother <- NA; mydata$father <- NA}
   # move the genotype columns to factor
   cleaning <- phenoDTfile$modifications$pheno # extract outliers
   # remove traits that are not actually present in the dataset

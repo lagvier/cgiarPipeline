@@ -611,8 +611,8 @@ metLMM <- function(
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait="inputObject", environment="general", 
-                         parameter= "analysisId", value= analysisId)
+  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject","all"), environment="general", 
+                         parameter= c("analysisId","estimateType"), value= c(analysisId,ifelse("designation"%in% randomTerm,"random","fixed") ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
