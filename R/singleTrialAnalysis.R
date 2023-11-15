@@ -18,6 +18,26 @@ staLMM <- function(
   names(traitFamily) <- trait
   fixedTerm <- unique(c("1",fixedTerm,"designation"))
   '%!in%' <- function(x,y)!('%in%'(x,y)) 
+  if(is.null(phenoDTfile$metrics)){
+    provMet <- as.data.frame(matrix(nrow=0, ncol=7))
+    colnames(provMet) <- c("module","analysisId","trait","environment","parameter","value","stdError")
+    phenoDTfile$metrics <- provMet
+  }
+  if(is.null(phenoDTfile$predictions)){
+    provMet <- as.data.frame(matrix(nrow=0, ncol=13))
+    colnames(provMet) <- c("module"   ,      "analysisId" ,    "pipeline"   ,    "trait"   ,       "gid"  ,          "designation"   ,"mother"  ,       "father"    ,     "entryType" ,     "environment" ,   "predictedValue" ,"stdError"  ,  "reliability"  )
+    phenoDTfile$predictions <- provMet
+  }
+  if(is.null(phenoDTfile$modeling)){
+    provMet <- as.data.frame(matrix(nrow=0, ncol=6))
+    colnames(provMet) <- c("module" ,     "analysisId"  ,"trait"  ,     "environment" ,"parameter"  , "value" )
+    phenoDTfile$modeling <- provMet
+  }
+  if(is.null(phenoDTfile$status)){
+    provMet <- as.data.frame(matrix(nrow=0, ncol=2))
+    colnames(provMet) <- c("module" ,     "analysisId" )
+    phenoDTfile$status <- data.frame(module="sta", analysisId=staAnalysisId)
+  }
   ###################################
   # loading the dataset
   mydata <- phenoDTfile$data$pheno # extract relevant data for sta
@@ -352,12 +372,15 @@ staLMM <- function(
             pp$reliability <- 1e-6
             predictionsList[[counter]] <- pp;
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
+            
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                          data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField, 
                                                     parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), 
                                                     value=c(0, cv, 0,0,0 ), stdError=c(0,0,0,0, 0)
                                          )
             )
+            
+            
             counter=counter+1
             
           }
