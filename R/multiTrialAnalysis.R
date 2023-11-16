@@ -21,6 +21,11 @@ metLMM <- function(
   if(length(fixedTerm) == 0){stop("Please provide your fixed effect terms.", call. = FALSE)}
   if(length(randomTerm) == 0){stop("Please provide your randomTerm effect terms.", call. = FALSE)}
   if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)}
+  if(is.null(phenoDTfile$metadata$weather)){
+    provMet <- as.data.frame(matrix(nrow=0, ncol=3))
+    colnames(provMet) <- c("environment", "parameter" ,  "value")
+    phenoDTfile$metadata$weather <- provMet
+  }
   names(traitFamily) <- trait
   heritLB <- rep(heritLB,length(trait))
   heritUB <- rep(heritUB,length(trait))
