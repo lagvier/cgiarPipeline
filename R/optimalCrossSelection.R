@@ -15,7 +15,7 @@ ocs <- function(
   ocsAnalysisId <- as.numeric(Sys.time())
   if(is.null(phenoDTfile)){stop("Please provide the predictions", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId", call. = FALSE)}
-  if(is.null(relDTfile)){stop("Please provide the type of relationship to be calculated", call. = FALSE)}
+  if(is.null(relDTfile)){stop("Please provide the type of relationship to be calculated: 'grm', 'nrm', or 'both' ", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) > 1){stop(paste0(" Only one trait can be used for optimal contribution. We suggest using an index."), call. = FALSE)}
   if(length(environment) > 1){stop(paste0(" Only one environment can be used for optimal contribution. We suggest using an across environment value."), call. = FALSE)}
@@ -30,6 +30,7 @@ ocs <- function(
   }
   
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
+    if(is.null(phenoDTfile$data$pedigree)){stop("Pedigree information is not available for this dataset. Please upload it if planning to use an NRM.", call. = FALSE)}
     N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
   }
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
