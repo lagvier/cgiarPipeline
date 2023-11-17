@@ -178,7 +178,7 @@ staLMM <- function(
                                     data = mydataSub, maxit = maxit),
                 silent = TRUE
               );  # mixRandom$VarDf
-              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family"), value=c(fixedFormulaForRanModel,randomFormulaForRanModel,as.character(newSpline)[2],traitFamily[iTrait]))
+              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationType"), value=c(fixedFormulaForRanModel,randomFormulaForRanModel,as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
               phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               # if random model run only keep variance components that were greater than zero and fit again
               # with genotypes as fixed

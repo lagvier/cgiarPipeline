@@ -32,7 +32,7 @@ metLMM <- function(
   traitOrig <- trait
   common <- intersect(fixedTerm,randomTerm)
   fixedTerm <- setdiff(fixedTerm,common)
-  if("designation" %in% randomTerm){}else{interactionsWithGeno <- NULL} # don't allow interactions if genotype is not random from start
+  if("designation" %in% randomTerm){returnFixedGeno=FALSE}else{interactionsWithGeno <- NULL; returnFixedGeno<- TRUE} # don't allow interactions if genotype is not random from start
   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions #
@@ -326,7 +326,7 @@ metLMM <- function(
             silent = TRUE
           )
           myGinverse <- NULL      #
-          currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across", parameter=c("fixedFormula","randomFormula","family"), value=c(fix,ranran,traitFamily[iTrait]))
+          currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across", parameter=c("fixedFormula","randomFormula","family","designationType"), value=c(fix,ranran,traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
           phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
           # print(mix$VarDf)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
@@ -616,8 +616,8 @@ metLMM <- function(
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject","all"), environment="general", 
-                         parameter= c("analysisId","estimateType"), value= c(analysisId,ifelse("designation"%in% randomTerm,"random","fixed") ))
+  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general", 
+                         parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
