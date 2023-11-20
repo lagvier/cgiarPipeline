@@ -48,8 +48,6 @@ rgg <- function(
   if(length(trait)==0){stop("None of the traits specified are available. Please double check", call. = FALSE)}
   ############################
   ## gg analysis
-  # gg <- ggp <- inter <- gg.y1 <- gg.yn <- segp <- seb1 <- seb0 <- r2 <- pv <- ntrial <- ntrial.se <- numeric();
-  # field <- trt <- vector()
   counter=1
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){
@@ -78,7 +76,6 @@ rgg <- function(
           }
         }
         fix <- paste("predictedValue ~",paste(fixedTerm, collapse=" + "))
-        # Ai <- PED$ginv; attr(Ai, "INVERSE") <- TRUE
         ranres <- "~units"#"~dsum(~units | environment)"
         mydataSub=mydataSub[with(mydataSub, order(environment)), ]
         mydataSub$w <- 1/(mydataSub$stdError)
@@ -112,9 +109,9 @@ rgg <- function(
               }
             }
           }
-          gg <- mean(p1, na.rm=TRUE); ggp <- mean(p2, na.rm=TRUE); segp <- mean(p3, na.rm=TRUE)
-          inter <- mean(p4, na.rm=TRUE); seb1 <- mean(p5, na.rm=TRUE); seb0<- mean(p6, na.rm=TRUE)
-          r2 <- mean(p7, na.rm=TRUE); pv <- mean(p8, na.rm=TRUE)
+          gg <- median(p1, na.rm=TRUE); ggp <- median(p2, na.rm=TRUE); segp <- median(p3, na.rm=TRUE)
+          inter <- median(p4, na.rm=TRUE); seb1 <- median(p5, na.rm=TRUE); seb0<- median(p6, na.rm=TRUE)
+          r2 <- median(p7, na.rm=TRUE); pv <- median(p8, na.rm=TRUE)
         }else{
           mix <- lm(as.formula(fix), data=mydataSub)
           sm <- summary(mix)
