@@ -19,7 +19,6 @@ pgg <- function(
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   if(is.null(environment)){environment <- na.omit(unique(mydata$environment))}
-  if(is.null(timePoint)){timePoint <- max(na.omit(unique(phenoDTfile$data$pheno$year)))}
   if(is.null(phenoDTfile$data$pedigree) || (nrow(phenoDTfile$data$pedigree) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   yearsToUse <- as.character(unique(phenoDTfile$data$pedigree$yearOfOrigin))
   mydata <- merge(mydata, phenoDTfile$data$pedigree[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
