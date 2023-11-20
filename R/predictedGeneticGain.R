@@ -57,9 +57,18 @@ pgg <- function(
                                               stdError=0
                                    )
       )
+      currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE, 
+                                    parameter=c("proportion","verbose"), value=c(proportion, verbose))
+      phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
     }
     
   }
   #########################################
-  return(result)#paste("pgg done:",id))
+  # update databases
+  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="pgg", analysisId=pggAnalysisId))
+  ## add which data was used as input
+  modeling <- data.frame(module="pgg",  analysisId=pggAnalysisId, trait=c("inputObject"), environment="general", 
+                         parameter= c("analysisId"), value= c(analysisId ))
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+  return(phenoDTfile)#paste("pgg done:",id))
 }
