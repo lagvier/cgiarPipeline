@@ -43,6 +43,7 @@ pgg <- function(
       badrels <- which(rels < 0); if(length(badrels) > 0){ rels[badrels] <- 1e-6}
       r <- ifelse(length(na.omit(rels)) > 0, mean(sqrt(na.omit(rels)), na.rm=TRUE), 1e-6)
       sigma<- sd(mydataSub$predictedValue, na.rm = TRUE)
+      mu<- mean(mydataSub$predictedValue, na.rm = TRUE)
       mydataSubSorted <- mydataSub[with(mydataSub, order(-predictedValue)), ]
       mydataSubSortedSel <- mydataSubSorted[1:round(nrow(mydataSubSorted) * p),]
       age <- mean(mydataSubSortedSel$year, na.rm=TRUE) - mean(mydataSubSortedSel$yearOfOrigin, na.rm=TRUE)
@@ -51,8 +52,8 @@ pgg <- function(
       ##
       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                    data.frame(module="pgg",analysisId=pggAnalysisId, trait= iTrait, environment=uE, 
-                                              parameter=c("r","sigmaG", "cycleLength","i","R","PGG"), method=c("sqrt(r2)","sd(BLUP)","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength"), 
-                                              value=c(r,sigma, age, i, R, ggAge), 
+                                              parameter=c("r","sigmaG","meanG", "cycleLength","i","R","PGG"), method=c("sqrt(r2)","sd(BLUP)","sum(x)/n","yearTest-yearOrigin","dnorm(qnorm(1 - p))/p","r*sigma*i","R/cycleLength"), 
+                                              value=c(r,sigma, mu, age, i, R, ggAge), 
                                               stdError=0
                                    )
       )
