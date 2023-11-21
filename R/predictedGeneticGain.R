@@ -58,7 +58,7 @@ pgg <- function(
                                    )
       )
       currentModeling <- data.frame(module="pgg", analysisId=pggAnalysisId,trait=iTrait, environment=uE, 
-                                    parameter=c("proportion","verbose"), value=c(proportion, verbose))
+                                    parameter=c("proportion(%)","verbose"), value=c(proportion, verbose))
       phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
     }
     
