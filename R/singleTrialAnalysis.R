@@ -13,7 +13,7 @@ staLMM <- function(
   ## IS USED IN THE BANAL APP UNDER THE GENETIC EVALUATION MODULES
   staAnalysisId <- as.numeric(Sys.time())#gsub(" ","-",gsub("[[:punct:]]", "-", as.character(Sys.time())) )
   if(is.null(phenoDTfile)){stop("Please provide the name of the file to be used for analysis", call. = FALSE)}
-  if(is.null(analysisId)){stop("Please provide analysisIds to be considered in cleaning", call. = FALSE)}
+  # if(is.null(analysisId)){stop("Please provide analysisIds to be considered in cleaning", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(is.null(traitFamily)){traitFamily <- rep("gaussian(link = 'identity')", length(trait))}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
@@ -47,6 +47,7 @@ staLMM <- function(
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   mydata$rowindex <- 1:nrow(mydata)
   myped <- phenoDTfile$data$pedigree
+  
   # merge mother and father information
   if(!is.null(myped)){
     if(nrow(myped) > 0){
@@ -55,7 +56,13 @@ staLMM <- function(
     }else{mydata$mother <- NA; mydata$father <- NA}
   }else{mydata$mother <- NA; mydata$father <- NA}
   # move the genotype columns to factor
-  cleaning <- phenoDTfile$modifications$pheno # extract outliers
+  
+  if(is.null(analysisId)){ # user doesn't want to use modifications
+    stop("Please provide an analysisId from phenotype QA", call. = FALSE)
+  }else{
+    cleaning <- phenoDTfile$modifications$pheno # extract outliers
+    cleaning <- cleaning[which(cleaning$analysisId %in% analysisId),]
+  }
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
   for(k in 1:length(trait)){
