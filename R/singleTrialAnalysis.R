@@ -85,7 +85,7 @@ staLMM <- function(
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
-    for(iField in fields){ # iField = fields[1]# "2019_WS_BINA_Regional_Station_Barishal"
+    for(iField in fields){ # iField = fields[8]# "2019_WS_BINA_Regional_Station_Barishal"
       if(verbose){cat(paste("Analyzing field", iField,"\n"))}
       # subset data
       mydataSub <- droplevels(mydata[which(as.character(mydata$environment) %in% iField),])
@@ -261,14 +261,17 @@ staLMM <- function(
                     shouldBeOne <- which(mixFixed$ndxCoefficients[[iGenoUnit]] == 0)
                     if(length(shouldBeOne) > 0){mixFixed$ndxCoefficients[[iGenoUnit]][shouldBeOne] = 1}
                     predictedValue <- mixFixed$coefMME[mixFixed$ndxCoefficients[[iGenoUnit]]] + mixFixed$coefMME[mixFixed$ndxCoefficients$`(Intercept)`]
-                    if(length(shouldBeOne) > 0){predictedValue[1] = mixFixed$coefMME[mixFixed$ndxCoefficients$`(Intercept)`]}
+                    if(length(shouldBeOne) > 0){predictedValue[1] = mixFixed$coefMME[mixFixed$ndxCoefficients$`(Intercept)`]} # adjust the value for first entry
                     dims <- mixFixed$EDdf
                     start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) # we don't add a one because we need the intercept
                     pev <- as.matrix(solve(mixFixed$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
                     stdError <- sqrt(diag(pev))
+                    stdError[1] <- mean(stdError[-1])
                     badSEs <- which( stdError < (sd(predictedValue, na.rm = TRUE)/100) )
                     if(length(badSEs) > 0){stdError[badSEs] <- sd(predictedValue, na.rm = TRUE)}
                     # just for reliability calculation
+                    dims <- mixRandom$EDdf
+                    start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) + 1 # we add the one when is random
                     pev <- as.matrix(solve(mixRandom$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
                     # stdErrorRandom <- (sqrt(diag(pevRandom)))
                   }else{ # user wants random effect predictions for genotype
