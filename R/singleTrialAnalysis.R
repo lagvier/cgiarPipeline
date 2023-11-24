@@ -1,6 +1,6 @@
 staLMM <- function(
     phenoDTfile= NULL,
-    analysisId=NULL
+    analysisId=NULL,
     trait=NULL, # per trait
     traitFamily=NULL,
     fixedTerm=c("1","designation"),
