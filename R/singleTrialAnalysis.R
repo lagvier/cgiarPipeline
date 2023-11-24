@@ -85,7 +85,7 @@ staLMM <- function(
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
-    for(iField in fields){ # iField = fields[8]# "2019_WS_BINA_Regional_Station_Barishal"
+    for(iField in fields){ # iField = fields[4]# "2019_WS_BINA_Regional_Station_Barishal"
       if(verbose){cat(paste("Analyzing field", iField,"\n"))}
       # subset data
       mydataSub <- droplevels(mydata[which(as.character(mydata$environment) %in% iField),])
@@ -104,7 +104,14 @@ staLMM <- function(
       
       nLevelsFixedunit <- apply(data.frame(setdiff(fixedTerm,"1")),1,function(x){length(table(mydataSub[,x])) }); names(nLevelsFixedunit) <- setdiff(fixedTerm,"1")
       badLevelsFixedunit <- names(nLevelsFixedunit)[which(nLevelsFixedunit <= 1)]
-      fixedTermTraitField <-c("1",setdiff(fixedTerm,badLevelsFixedunit))
+      fixedTermTraitField <- unique(c("1",setdiff(fixedTerm,badLevelsFixedunit)))
+      # impute fixed effect columns if they are numeric
+      toImpute <- unlist(lapply(mydataSub[,setdiff(fixedTermTraitField,"1")], class))
+      keepToImpute <- which(toImpute %in% "numeric")
+      if(length(keepToImpute) > 0){
+        toImpute <- names(toImpute[keepToImpute])
+        for(iImpute in toImpute){mydataSub[, iImpute] <- sommer::imputev(mydataSub[, iImpute])}
+      }
       
       if(length(out) > 0){mydataSub[out,"trait"] <- NA} # set outliers to NA
       # do analysis
@@ -127,7 +134,7 @@ staLMM <- function(
             }
           }
           # make factors
-          for(iEd in c("environment","trial","row","col","rep","iBlock")){mydataSub[,paste0(iEd,"F")] <-  mydataSub[,iEd]}
+          for(iEd in c("environment","trial","row","col","rep","iBlock")){mydataSub[,paste0(iEd,"F")] <-  as.factor(mydataSub[,iEd])}
           # find best experimental design formula
           mde <- cgiarBase::asremlFormula(fixed=as.formula(paste("trait","~ 1")),
                                           random=~ at(environmentF):rowF + at(environmentF):colF + at(environmentF):trialF + at(environmentF):repF + at(environmentF):iBlockF,
@@ -182,7 +189,7 @@ staLMM <- function(
               phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               # if random model run only keep variance components that were greater than zero and fit again
               # with genotypes as fixed
-              if(!inherits(mixRandom,"try-error") & ((length(factorsFittedGreater) > 0) ) ){ # if random model runs well try the fixed model
+              if(!inherits(mixRandom,"try-error") & ((length(factorsFittedGreater) > 0) ) ){ # if random model runs well try the fixed effect model
                 ## save residuals
                 whereResidualGoes <- mydataSub[which(!is.na(mydataSub$trait)),"rowindex"]
                 mydata[whereResidualGoes,paste(iTrait,"residual",sep="-")] <- mixRandom$residuals[,1]
