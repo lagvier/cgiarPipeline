@@ -99,7 +99,7 @@ ocs <- function(
                                               environment=treatment, predictedValue=eMPsel, stdError=inbreedingSel, reliability=crossPlan[,3]
     )
     # bind modeling for this treatment
-    modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=environment, 
+    modeling <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=trait, environment=treatment, 
                            parameter= "ocsFormula", value= treatment
     )
     phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
@@ -126,7 +126,7 @@ ocs <- function(
         traitPredictions[[iTrait]] <- data.frame(module="ocs",  analysisId=ocsAnalysisId, pipeline= paste(sort(unique(mydata$pipeline)),collapse=", "),
                                                    trait=iTrait, gid=1:nrow(crossPlan), designation=paste(crossPlan[,1],crossPlan[,2], sep=" x "),
                                                    mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross",
-                                                   environment=environment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
+                                                   environment=treatment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
         )
         
       }
