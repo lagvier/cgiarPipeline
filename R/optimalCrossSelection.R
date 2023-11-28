@@ -28,7 +28,7 @@ ocs <- function(
   if(!is.null(entryType)){
     mydata <- mydata[which(mydata$entryType %in% entryType),]
   }
-  otherTraits <- setdiff(unique(phenoDTfile$predictions$trait), trait)
+  otherTraits <- setdiff(unique(mydata$trait), trait)
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
     if(is.null(phenoDTfile$data$pedigree)){stop("Pedigree information is not available for this dataset. Please upload it if planning to use an NRM.", call. = FALSE)}
     N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
