@@ -128,6 +128,10 @@ ocs <- function(
                                                    mother=crossPlan[,1],father=crossPlan[,2], entryType="predictedCross",
                                                    environment=treatment, predictedValue=eMPtrait, stdError=inbreedingSel, reliability=crossPlan[,3]
         )
+        metrics <- data.frame(module="ocs",  analysisId=ocsAnalysisId, trait=iTrait, environment=treatment, 
+                              parameter= c("meanValue"),method= "sum/n", value=c(mean(eMPtrait)),
+                              stdError=c(sd(eMPtrait)/sqrt(length(eMPtrait))   )  )
+        phenoDTfile$metrics <- rbind(phenoDTfile$metrics, metrics[, colnames(phenoDTfile$metrics)])
         
       }
       predictionsBindList[[iRow]] <- rbind(predictionsBindList[[iRow]], do.call(rbind, traitPredictions))
