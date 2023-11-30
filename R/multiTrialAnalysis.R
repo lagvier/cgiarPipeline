@@ -21,7 +21,24 @@ metLMM <- function(
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   if(length(fixedTerm) == 0){stop("Please provide your fixed effect terms.", call. = FALSE)}
   if(length(randomTerm) == 0){stop("Please provide your randomTerm effect terms.", call. = FALSE)}
-  if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)}
+  if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){
+    stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)
+  }
+  if(modelType %in% c("gblup","ssgblup","rrblup") & !is.null(phenoDTfile$data$geno)){
+    Markers <- phenoDTfile$data$geno
+    if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id 
+      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
+    }else{ # user provided a modifications Id
+      modificationsMarkers <- phenoDTfile$modifications$geno
+      theresMatch <- which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications)
+      if(length(theresMatch) > 0){ # there's a modification file after matching the Id
+        modificationsMarkers <- modificationsMarkers[theresMatch,]
+        Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
+      }else{ # there's no match of the modification file
+        if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
+      }
+    }
+  }
   if(is.null(phenoDTfile$metadata$weather)){
     provMet <- as.data.frame(matrix(nrow=0, ncol=3))
     colnames(provMet) <- c("environment", "parameter" ,  "value")
@@ -46,28 +63,8 @@ metLMM <- function(
   metrics <- phenoDTfile$metrics 
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
   # loading marker modifications
-  if(is.null(analysisIdForGenoModifications)){
-    Markers <- phenoDTfile$data$geno
-    if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
-  }else{
-    if(length(analysisIdForGenoModifications) == 0){
-      Markers <- phenoDTfile$data$geno
-      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
-      if(is.null(Markers) & (modelType %in% c("gblup","rrblup","ssblup")) ){ # user wants a marker model but there's no markers
-        modelType <- "blup"
-        print("Markers are not available. Changing to BLUP model.", call. = FALSE)
-      }else{
-        # we let it go, nothing will break
-      }
-    }else{
-      modificationsMarkers <- phenoDTfile$modifications$geno
-      modificationsMarkers <- modificationsMarkers[which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications),]
-      if(nrow(modificationsMarkers) > 0){
-        Markers <- phenoDTfile$data$geno
-        Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
-      }
-    }
-  }
+  # if(analysisIdForGenoModifications == ""){analysisIdForGenoModifications <- NULL}
+  
   #############################
   # loading the additional matrix needed depending on the model
   if(modelType == "blup"){
