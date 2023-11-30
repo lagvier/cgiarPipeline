@@ -50,11 +50,22 @@ metLMM <- function(
     Markers <- phenoDTfile$data$geno
     if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
   }else{
-    modificationsMarkers <- phenoDTfile$modifications$geno
-    modificationsMarkers <- modificationsMarkers[which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications),]
-    if(nrow(modificationsMarkers) > 0){
+    if(length(analysisIdForGenoModifications) == 0){
       Markers <- phenoDTfile$data$geno
-      Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
+      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
+      if(is.null(Markers) & (modelType %in% c("gblup","rrblup","ssblup")) ){ # user wants a marker model but there's no markers
+        modelType <- "blup"
+        print("Markers are not available. Changing to BLUP model.", call. = FALSE)
+      }else{
+        # we let it go, nothing will break
+      }
+    }else{
+      modificationsMarkers <- phenoDTfile$modifications$geno
+      modificationsMarkers <- modificationsMarkers[which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications),]
+      if(nrow(modificationsMarkers) > 0){
+        Markers <- phenoDTfile$data$geno
+        Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
+      }
     }
   }
   #############################
