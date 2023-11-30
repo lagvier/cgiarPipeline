@@ -1,11 +1,12 @@
 metLMM <- function(
     phenoDTfile= NULL, # analysis to be picked from predictions database
     analysisId=NULL,
+    analysisIdForGenoModifications=NULL,
     fixedTerm= c("environment"),  randomTerm=c("designation"),  residualBy=NULL,
     interactionsWithGeno=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
     heritLB= 0.15,  heritUB= 0.95,
-    modelType="blup", # either "grm", "nrm", or both
+    modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     verbose=TRUE
@@ -41,8 +42,21 @@ metLMM <- function(
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   if( length(setdiff(setdiff(randomTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(randomTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
+  # loading the metrics
   metrics <- phenoDTfile$metrics 
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
+  # loading marker modifications
+  if(is.null(analysisIdForGenoModifications)){
+    Markers <- phenoDTfile$data$geno
+    if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
+  }else{
+    modificationsMarkers <- phenoDTfile$modifications$geno
+    modificationsMarkers <- modificationsMarkers[which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications),]
+    if(nrow(modificationsMarkers) > 0){
+      Markers <- phenoDTfile$data$geno
+      Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
+    }
+  }
   #############################
   # loading the additional matrix needed depending on the model
   if(modelType == "blup"){
@@ -86,7 +100,6 @@ metLMM <- function(
   heritUB <- heritUB[which(traitOrig %in% trait)]
   ############################
   # remove outliers from each environment
-  envs <- unique(mydata$environment)
   mydata$rowindex <- 1:nrow(mydata)
   ##############################
   ## met analysis
@@ -96,21 +109,17 @@ metLMM <- function(
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
-    # if(!is.null(envsToInclude)){
-    #   envsToIncludeTrait = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
-    #   mydataSub <- mydataSub[which(mydataSub$environment %in% envsToIncludeTrait),]
-    # }
     # remove bad environment
-    pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2")),]
+    pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2")),]
     goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > heritLB[counter2]) & (pipeline_metricsSub$value < heritUB[counter2])),"environment"])
     mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
     ## remove records without marker data if marker effects
     if(modelType == "rrblup"){ # if rrBLUP model we remove records without markers
-      mydataSub <- mydataSub[which(mydataSub$designation %in% rownames(phenoDTfile$data$geno)),]
-      Mtrait <- phenoDTfile$data$geno[which(rownames(phenoDTfile$data$geno) %in% mydataSub$designation),]
+      mydataSub <- mydataSub[which(mydataSub$designation %in% rownames(Markers)),]
+      Mtrait <- Markers[which(rownames(Markers) %in% unique(mydataSub$designation)),]
     }
-    LGrp <- list();   groupTrait <- NULL
+    LGrp <- list();   groupTrait <- NULL # in case of GxE models to store the grouping
     ## next step
     if(nrow(mydataSub) == 0){
       print(paste("There was no predictions to work with in trait",iTrait,". Please look at your H2 boundaries. You may be discarding all envs."))
@@ -128,7 +137,7 @@ metLMM <- function(
       ei$parameter <- paste0("envIndex_",iTrait)
       # update the weather metadata
       phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
-      toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","parameter")]))
+      toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated()))
       phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(weather)
       if(!is.null(phenoDTfile$metadata$weather)){
@@ -172,7 +181,6 @@ metLMM <- function(
           if(deregress){
             mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
           }
-          
           if(!is.null(randomTerm)){
             if(modelType == "rrblup"){
               reduced <- with(mydataSub,cgiarPIPE::redmm(x=designation,M=Mtrait, nPC=nPC, returnLam = TRUE))
@@ -268,9 +276,9 @@ metLMM <- function(
                 N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
               }
               if(modelType %in% c("gblup","ssgblup")){ # we need to calculate GRM
-                commonBetweenMandP <- intersect(rownames(phenoDTfile$data$geno),designationFlevels)
+                commonBetweenMandP <- intersect(rownames(Markers),designationFlevels)
                 if(length(commonBetweenMandP) < 2){ stop("Markers could not be matched with phenotypes. Please ensure that you have used the right marker file or check the rownames of your marker matrix and ids of your phenotypes.", call. = FALSE)                }
-                M <- phenoDTfile$data$geno[commonBetweenMandP,]
+                M <- Markers[commonBetweenMandP,]
                 if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
                   A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
                 }else{ A <- sommer::A.mat(M) };  M <- NULL
@@ -285,7 +293,7 @@ metLMM <- function(
               badBlankGenotype <- which(colnames(A)=="")
               if(length(badBlankGenotype) > 0){A <- A[-badBlankGenotype,-badBlankGenotype]}
               inter <- intersect(designationFlevels,colnames(A)) # go for sure
-              onlyInA <- setdiff(rownames(phenoDTfile$data$geno),designationFlevels)
+              onlyInA <- setdiff(rownames(Markers),designationFlevels)
               differ <- setdiff(designationFlevels,inter) # are missing in A matrix
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=differ, withMarkOnly=onlyInA)
               # get inverse matrix
@@ -340,7 +348,7 @@ metLMM <- function(
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if(modelType == "rrblup"){ # user wants to predict using marker effects
               ##
-              Mfull <- phenoDTfile$data$geno
+              Mfull <- Markers
               if((ncol(Mfull) < nrow(Mfull)) | nPC==0){M2 <- Mfull}else{  M2 <- tcrossprod(Mfull)}
               xx2 = with(mydataSub, cgiarPIPE::redmm(x=designation, M=M2, nPC=nPC, returnLam = TRUE)) # we need the new lambda for the fullt marker matrix
               ss <- mix$VarDf;  rownames(ss) <- ss$VarComp
@@ -360,17 +368,19 @@ metLMM <- function(
                 pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
                 pev <- xx2$Lam %*% pev %*% t(xx2$Lam) 
                 stdError <- (sqrt(Matrix::diag(pev)))
-                reliability <- 1 - (stdError/as.numeric(var(predictedValue)))
+                Vg <- (ss[iGroup,"Variance"]*ncol(Markers))/2
+                reliability <- abs((Vg - Matrix::diag(pev))/Vg)
                 badRels <- which(reliability > 1); if(length(badRels) > 0){reliability[badRels] <- 0.9999}
                 badRels2 <- which(reliability < 0); if(length(badRels2) > 0){reliability[badRels2] <- 0}
                 pp[[iGroup]] <- data.frame(designation=rownames(predictedValue), predictedValue=predictedValue, stdError=stdError, reliability=reliability,
                                            trait=paste0(iTrait,"_",iGroup) )
+                cv <- (sd(predictedValue,na.rm=TRUE)/mean(predictedValue,na.rm=TRUE))*100
                 ## save metrics
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across", 
                                                         parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"), 
-                                                        value=c(mean(pp$predictedValue, na.rm=TRUE), cv, median(pp$reliability), ss[iGroup,"Variance"]), 
-                                                        stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0)
+                                                        value=c(mean(predictedValue, na.rm=TRUE), cv, median(reliability), var(predictedValue, na.rm=TRUE)  ), 
+                                                        stdError=c(0,0,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),0)
                                              )
                 )
                 counter <- counter+1
@@ -385,7 +395,7 @@ metLMM <- function(
                 ## do genetic evaluation only if there was genotype as random effect
                 ######################################################
                 if(modelType %in% c("gblup","ssgblup")){ # if user provided markers
-                  allIndsNames <- rownames(phenoDTfile$data$geno) # individuals in the marker matrix
+                  allIndsNames <- rownames(Markers) # individuals in the marker matrix
                 }else{# if user provided relationship matrix
                   allIndsNames <- colnames(A) # individuals in the relationship matrix
                 }
@@ -415,7 +425,7 @@ metLMM <- function(
                   mydataSub2 <- mydataSub[which(!is.na(mydataSub$predictedValue)),]
                   mydataSub2 <- droplevels(mydataSub2[which(mydataSub2$designation %in% c(present)),])
                   if(modelType %in% c("gblup","ssgblup")){ # if user provided markers
-                    AGE <- sommer::A.mat(phenoDTfile$data$geno[intersect(present,rownames(phenoDTfile$data$geno)),])
+                    AGE <- sommer::A.mat(Markers[intersect(present,rownames(Markers)),])
                   }else{
                     present2 <- intersect(colnames(A),present)
                     AGE <- A[present2,present2]
