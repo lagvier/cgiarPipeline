@@ -56,10 +56,11 @@ indexDesire <- function(
   #########################################
   ## update databases
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)])
-  modeling <- data.frame(module="indexD",analysisId=idxAnalysisId, trait=if(scaled){paste0(rep(trait,2),"_scaled")}else{rep(trait,2)}, environment="across",parameter=c(rep("desire",2),rep("weight",2)),value=c(desirev, b ))
+  modeling <- data.frame(module="indexD",analysisId=idxAnalysisId, trait=if(scaled){paste0(rep(trait,2),"_scaled")}else{rep(trait,2)},
+                         environment="across",parameter=c(rep("desire",length(trait)),rep("weight",length(trait))),value=c(desirev, b ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="indexD", analysisId=idxAnalysisId))
-  modeling <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait="inputObject", environment="general", 
+  modeling <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait="inputObject", environment="general",
                          parameter= "analysisId", value= analysisId)
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)

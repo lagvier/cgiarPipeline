@@ -26,7 +26,7 @@ metLMM <- function(
   }
   if(modelType %in% c("gblup","ssgblup","rrblup") & !is.null(phenoDTfile$data$geno)){
     Markers <- phenoDTfile$data$geno
-    if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id 
+    if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id
       if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
     }else{ # user provided a modifications Id
       modificationsMarkers <- phenoDTfile$modifications$geno
@@ -60,11 +60,11 @@ metLMM <- function(
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   if( length(setdiff(setdiff(randomTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(randomTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   # loading the metrics
-  metrics <- phenoDTfile$metrics 
+  metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
   # loading marker modifications
   # if(analysisIdForGenoModifications == ""){analysisIdForGenoModifications <- NULL}
-  
+
   #############################
   # loading the additional matrix needed depending on the model
   if(modelType == "blup"){
@@ -149,7 +149,7 @@ metLMM <- function(
       phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(weather)
       if(!is.null(phenoDTfile$metadata$weather)){
-        metas <- phenoDTfile$metadata$weather; 
+        metas <- phenoDTfile$metadata$weather;
         metas <- reshape(metas, direction = "wide", idvar = "environment",
                          timevar = "parameter", v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","", colnames(metas))
@@ -201,7 +201,7 @@ metLMM <- function(
               rTermsTrait <- randomTerm[which(apply(data.frame(randomTerm),1,function(x){length(table(mydataSub[,x]))}) > 1)]
             }
           }else{rTermsTrait=NULL}
-          
+
           if(!is.null(fixedTerm)){
             fixedTermTraitMinus <- setdiff(fixedTerm,"1") # remove intercept for a minute
             if(length(fixedTermTraitMinus) > 0){ # check that fixed effect terms have more than one level and can be fitted
@@ -211,7 +211,7 @@ metLMM <- function(
               fixedTermTrait <- fixedTerm
             }
           }else{fixedTermTrait=NULL}
-          
+
           if(!is.null(residualBy)){
             residualByTrait <- residualBy[which(apply(data.frame(residualBy),1,function(x){length(table(mydataSub[,x]))}) > 1)]
             if(length(residualByTrait) == 0){residualByTrait=NULL}
@@ -224,7 +224,7 @@ metLMM <- function(
                 mydataSub <- cbind(mydataSub,reduced$Z*mydataSub[,iInteraction])
                 rTermsTrait <- c(rTermsTrait,paste0("grp(QTL",iInteraction,")"))
               }
-            }else{ 
+            }else{
               interacs <- expand.grid("designation",interactionsWithGenoTrait)
               interacs<- as.data.frame(interacs[which(as.character(interacs[,1]) != as.character(interacs[,2])),])
               interacsUnlist <- apply(interacs,1,function(x){paste(x,collapse = ":")})
@@ -234,7 +234,7 @@ metLMM <- function(
             rTermsTrait <- rTermsTrait
           }
           rTermsTrait <- setdiff(rTermsTrait, fixedTermTrait)
-          
+
           if(length(rTermsTrait) == 0){ # if there's not a single random effect to be fitted
             ranran <- NULL
             myGinverse <- NULL # if no random effects we don't have a g inverse for LMMsolver
@@ -248,14 +248,14 @@ metLMM <- function(
           }else{
             ranres <- NULL
           }
-          
+
           mydataSub=mydataSub[with(mydataSub, order(environment)), ] # sort by environments
           mydataSub$w <- 1/(mydataSub$stdError^2) # add weights column
           if(verbose){
             cat(fix,"\n")
             cat(ranran,"\n")
           }
-          
+
           if( modelType == "blup" ){ # if user doesn't have any special model
             # make sure the matrix only uses the leves for individuals with data
             designationFlevels <- unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"])
@@ -269,7 +269,7 @@ metLMM <- function(
             levelsInAinv <- colnames(Ainv)
             genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
           }else{
-            if(modelType == "rrblup"){ # if user will use the rrblup 
+            if(modelType == "rrblup"){ # if user will use the rrblup
               designationFlevels <- unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"])
               inter <- character()
               onlyInA <- character() # genotypes only present in A and not in dataset
@@ -279,7 +279,7 @@ metLMM <- function(
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
             }else{ # if user wants to do a gblup, pblup or ssgblup model
               designationFlevels <- as.character(unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"]))
-              
+
               if(modelType %in% c("pblup","ssgblup")){ # we need to calculate NRM
                 N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
               }
@@ -295,7 +295,7 @@ metLMM <- function(
                 }
               }
               if(modelType %in% c("pblup")){ A <- N  }
-              
+
               badGeno <- which(rownames(A) == "") # should have no covariance with anyone
               if(length(badGeno) > 0){A[badGeno,2:ncol(A)]=0; A[2:nrow(A),badGeno]=0} # make zero covariance with this genotype
               badBlankGenotype <- which(colnames(A)=="")
@@ -350,9 +350,9 @@ metLMM <- function(
             for(iIndex in c(numericMetas,"envIndex")){
               if( (iIndex %in% interactionsWithGenoTrait) ){names(mix$ndxCoefficients[[paste0("designation:",iIndex)]]) <- names(mix$ndxCoefficients$designation) } # copy same names than main designation effect
             }
-            
+
             iGenoUnit <- "designation" # in MET iGenoUnit is always "designation" only in STA we allow for different
-            
+
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if(modelType == "rrblup"){ # user wants to predict using marker effects
               ##
@@ -374,7 +374,7 @@ metLMM <- function(
                 start <- sum(dims[1:(which(dims$Term == iGroup) - 1),"Model"]) # we don't add a one because we need the intercept
                 nEffects <- length(mix$coefMME[mix$ndxCoefficients[[iGroup]]])
                 pev <- as.matrix(solve(mix$C))[start:(start+nEffects-1),start:(start+nEffects-1)]
-                pev <- xx2$Lam %*% pev %*% t(xx2$Lam) 
+                pev <- xx2$Lam %*% pev %*% t(xx2$Lam)
                 stdError <- (sqrt(Matrix::diag(pev)))
                 Vg <- (ss[iGroup,"Variance"]*ncol(Markers))/2
                 reliability <- abs((Vg - Matrix::diag(pev))/Vg)
@@ -385,9 +385,9 @@ metLMM <- function(
                 cv <- (sd(predictedValue,na.rm=TRUE)/mean(predictedValue,na.rm=TRUE))*100
                 ## save metrics
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                             data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across", 
-                                                        parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"), 
-                                                        value=c(mean(predictedValue, na.rm=TRUE), cv, median(reliability), var(predictedValue, na.rm=TRUE)  ), 
+                                             data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across",
+                                                        parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
+                                                        value=c(mean(predictedValue, na.rm=TRUE), cv, median(reliability), var(predictedValue, na.rm=TRUE)  ),
                                                         stdError=c(0,0,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),0)
                                              )
                 )
@@ -396,8 +396,8 @@ metLMM <- function(
               pp <- do.call(rbind,pp)
               ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             }else{ # user wants to do genetic evaluation
-              
-              
+
+
               if(length(grep("designation", ranran)) > 0){ # geno was random
                 ######################################################
                 ## do genetic evaluation only if there was genotype as random effect
@@ -502,9 +502,9 @@ metLMM <- function(
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
               ## save metrics
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment="across", 
-                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"), 
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, mean(pp$reliability), Vg), 
+                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment="across",
+                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, mean(pp$reliability), Vg),
                                                       stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0)
                                            )
               )
@@ -513,11 +513,11 @@ metLMM <- function(
               # extract sensitivities if interaction is requested
               if(length(interactionsWithGenoTrait) > 0){ # if there's interactions
                 if( length(intersect(interactionsWithGenoTrait, c("envIndex","timePoint","latitude","longitude","altitude","weather1","weather2"))) > 0 ){
-                  
+
                   for(iInteractionTrait in c("envIndex","timePoint","latitude","longitude","altitude","weather1","weather2")){ # iInteractionTrait="envIndex"
-                    
+
                     if( (iInteractionTrait %in% interactionsWithGenoTrait) ){ # iInteractionTrait="envIndex"
-                      
+
                       counter <- counter+1
                       iGenoUnit <- paste0("designation:",iInteractionTrait)#"designation:envIndex"
                       if(iGenoUnit %in% fixedTermTrait){ # user wants fixed effect predictions for genotype:envIndex
@@ -539,25 +539,25 @@ metLMM <- function(
                       cv <- (sd(pp2$predictedValue,na.rm=TRUE)/mean(pp2$predictedValue,na.rm=TRUE))*100
                       ## save metrics
                       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                                   data.frame(module="mta",analysisId=mtaAnalysisId, trait=paste(iTrait,iInteractionTrait,sep="-"), 
-                                                              environment="across", 
-                                                              parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"), 
-                                                              value=c(mean(pp2$predictedValue, na.rm=TRUE), cv, mean(pp2$reliability), Vg), 
+                                                   data.frame(module="mta",analysisId=mtaAnalysisId, trait=paste(iTrait,iInteractionTrait,sep="-"),
+                                                              environment="across",
+                                                              parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
+                                                              value=c(mean(pp2$predictedValue, na.rm=TRUE), cv, mean(pp2$reliability), Vg),
                                                               stdError=c(0,0,sd(pp2$reliability, na.rm = TRUE)/sqrt(length(pp2$reliability)),0)
                                                    )
                       )
                       pp <- rbind(pp,pp2) # bind predictions
-                      
+
                     }
-                    
+
                   }
-                  
+
                 }
               } # if there's even interactions
-              
+
             }
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
+
           }else{ # if model failed
             if(modelType == "rrblup"){
               # do nothing
@@ -571,17 +571,17 @@ metLMM <- function(
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
               ## save metrics
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, 
-                                                      environment="across", 
-                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"), 
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0), 
+                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
+                                                      environment="across",
+                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0),
                                                       stdError=c(0,0,0,0)
                                            )
               )
             }
-            
+
           }
-          
+
           pp$environment <- "across"
           mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
           pp$entryType <- apply(data.frame(pp$designation),1,function(x){
@@ -634,7 +634,7 @@ metLMM <- function(
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general", 
+  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
