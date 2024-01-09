@@ -6,6 +6,7 @@ rgg <- function(
     deregress=FALSE,
     partition=FALSE,
     yearsToUse=NULL,
+    entryTypeToUse=NULL,
     verbose=TRUE
 ){
   ## THIS FUNCTION CALCULATES THE REALIZED GENETIC GAIN FOR SOME TRAITS
@@ -19,19 +20,22 @@ rgg <- function(
   # phenoDTfile$data$pedigree <- unique(phenoDTfile$predictions[,c(gTerm,"mother","father")])
   # phenoDTfile$data$pedigree$yearOfOrigin <- sample(2000:2023, nrow(phenoDTfile$data$pedigree), replace = TRUE)
   ############################
-  # loading the dataset 
-  mydata <- phenoDTfile$predictions 
+  # loading the dataset
+  mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
-  
+
   if(is.null(phenoDTfile$data$pedigree) || (nrow(phenoDTfile$data$pedigree) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
-  if(!is.null(yearsToUse)){ # reduce the dataset
-    yearsToUse <- as.character(yearsToUse)
-  } else{
-    yearsToUse <- as.character(unique(phenoDTfile$data$pedigree$yearOfOrigin))
-  }
   mydata <- merge(mydata, phenoDTfile$data$pedigree[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
+  if(!is.null(yearsToUse)){ # reduce the dataset
+    yearsToUse <- as.numeric(as.character(yearsToUse))
+    mydata <- mydata[which(mydata$yearOfOrigin %in% yearsToUse),]
+  }
+  if(!is.null(entryTypeToUse)){ # reduce the dataset
+    entryTypeToUse <- as.character(entryTypeToUse)
+    mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+  }
   if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter.",call. = FALSE)}
   if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.", call. = FALSE)}
   # remove traits that are not actually present in the dataset
@@ -59,7 +63,7 @@ rgg <- function(
     mydataSub$designation <- as.factor(mydataSub$designation)
     mydataSub$predictedValue.d <- mydataSub$predictedValue/mydataSub$rel
     for(iFt in fixedTerm){mydataSub[,iFt] <- as.numeric(mydataSub[,iFt])}
-    
+
     # do analysis
     if(!is.na(var(mydataSub[,"predictedValue"],na.rm=TRUE))){ # if there's variance
       if( var(mydataSub[,"predictedValue"], na.rm = TRUE) > 0 ){
@@ -79,7 +83,7 @@ rgg <- function(
         ranres <- "~units"#"~dsum(~units | environment)"
         mydataSub=mydataSub[with(mydataSub, order(environment)), ]
         mydataSub$w <- 1/(mydataSub$stdError)
-        
+
         hh<-split(mydataSub,mydataSub[,fixedTerm])
         hh <- lapply(hh,function(x){
           outlier <- boxplot.stats(x=x[, "predictedValue"],coef=1.5 )$out
@@ -87,7 +91,7 @@ rgg <- function(
           if(length(bad) >0){out <- x[-bad,]}else{out<-x}
           return(out)
         })
-        
+
         if(partition){
           p1 <- p2 <- p3 <- p4 <- p5 <- p6 <- p7 <- p8 <- numeric();cc <- 1
           for(u in 1:(length(hh))){
@@ -131,13 +135,13 @@ rgg <- function(
         ntrial <- ntrial[which(ntrial$trait ==iTrait),]
         ntrial <- length(unique(ntrial$environment))
         phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                     data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment="across", 
-                                                parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear"), method=ifelse(deregress,"blup+dereg","mackay"), 
-                                                value=c(gg,inter, ggp, r2, pv, ntrial,gg.y1,gg.yn  ), 
+                                     data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment="across",
+                                                parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear"), method=ifelse(deregress,"blup+dereg","mackay"),
+                                                value=c(gg,inter, ggp, r2, pv, ntrial,gg.y1,gg.yn  ),
                                                 stdError=c(seb1,seb0,segp,0,0,0,0,0)
                                      )
         )
-        currentModeling <- data.frame(module="rgg", analysisId=rggAnalysisId,trait=iTrait, environment="across", 
+        currentModeling <- data.frame(module="rgg", analysisId=rggAnalysisId,trait=iTrait, environment="across",
                                       parameter=c("deregression","partitionedModel"), value=c(deregress, partition))
         phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
         counter=counter+1
@@ -149,7 +153,7 @@ rgg <- function(
   ## write the parameters to the parameter database
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="rgg", analysisId=rggAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="rgg",  analysisId=rggAnalysisId, trait=c("inputObject"), environment="general", 
+  modeling <- data.frame(module="rgg",  analysisId=rggAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)#
