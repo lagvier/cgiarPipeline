@@ -43,11 +43,17 @@ staLMM <- function(
   ###################################
   # loading the dataset
   mydata <- phenoDTfile$data$pheno # extract relevant data for sta
+  myped <- phenoDTfile$data$pedigree
+  ### change column names for mapping
+  paramsPheno <- phenoDTfile$metadata$pheno
+  paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  ###
   if (nrow(mydata) < 2) stop("Not enough phenotypic data is available to perform a single trial analysis. Please add the phenotypic data to your data object.", call. = FALSE)
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   mydata$rowindex <- 1:nrow(mydata)
-  myped <- phenoDTfile$data$pedigree
-  
+
   # merge mother and father information
   if(!is.null(myped)){
     if(nrow(myped) > 0){
@@ -56,7 +62,7 @@ staLMM <- function(
     }else{mydata$mother <- NA; mydata$father <- NA}
   }else{mydata$mother <- NA; mydata$father <- NA}
   # move the genotype columns to factor
-  
+
   if(is.null(analysisId)){ # user doesn't want to use modifications
     stop("Please provide an analysisId from phenotype QA", call. = FALSE)
   }else{
@@ -430,6 +436,9 @@ staLMM <- function(
   ## update data tables
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions, predictionsBind[,colnames(phenoDTfile$predictions)] )
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="sta", analysisId=staAnalysisId))
+  ### change column names back for mapping
+  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
+  ##
   phenoDTfile$data$pheno <- mydata[,-which(colnames(mydata) %in% c("mother","father") )]
   return(phenoDTfile)
 }
