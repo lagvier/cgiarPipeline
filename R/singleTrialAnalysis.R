@@ -100,11 +100,17 @@ staLMM <- function(
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     mydata[,paste(iTrait,"residual",sep="-")] <- NA
-    for(iField in fields){ # iField = fields[4]# "2019_WS_BINA_Regional_Station_Barishal"
+    for(iField in fields){ # iField = fields[1]# "ARH1_2016"
       if(verbose){cat(paste("Analyzing field", iField,"\n"))}
       # subset data
       mydataSub <- droplevels(mydata[which(as.character(mydata$environment) %in% iField),])
       mydataSub$trait <- mydataSub[,iTrait]
+      # make factors
+      for(iEd in c("environment","trial","row","col","rep","iBlock")){
+        if(iEd %in% colnames(mydataSub)){
+          mydataSub[,paste0(iEd,"F")] <-  as.factor(mydataSub[,iEd])
+        }else{  mydataSub[,paste0(iEd,"F")] <- NA; mydataSub[,iEd] <- NA   }
+      }
       for(iName in c("designation","mother","father")){
         mydataSub[,iName] <- as.factor(mydataSub[,iName])
       }
@@ -137,19 +143,18 @@ staLMM <- function(
             # try to fix assuming they jusy have the rows and cols by replicate
             badRecords <- which(gridCheck > 1, arr.ind = TRUE)
             if(nrow(badRecords) > 0){
-              mydataSub <- cgiarBase::fixCoords(mydataSub)
+              mydataSub <- fixCoords(mydataSub, rowcoord = "row", colcoord = "col", rep="rep")
             }
             # make the check once again in case that didn't help
             gridCheck <- with(mydataSub,table(row,col))
             badRecords <- which(gridCheck > 1, arr.ind = TRUE)
             if(nrow(badRecords) > 0){
               if(verbose){cat("Replicated records assigned to same row and column in the same trial. Ignoring row and column information for this trial. \n")}
-              mydataSub$row <- NA
-              mydataSub$col <- NA
+              mydataSub$row <- mydataSub$rowF <- NA
+              mydataSub$col <- mydataSub$colF <- NA
             }
           }
-          # make factors
-          for(iEd in c("environment","trial","row","col","rep","iBlock")){mydataSub[,paste0(iEd,"F")] <-  as.factor(mydataSub[,iEd])}
+          
           # find best experimental design formula
           mde <- cgiarBase::asremlFormula(fixed=as.formula(paste("trait","~ 1")),
                                           random=~ at(environmentF):rowF + at(environmentF):colF + at(environmentF):trialF + at(environmentF):repF + at(environmentF):iBlockF,
