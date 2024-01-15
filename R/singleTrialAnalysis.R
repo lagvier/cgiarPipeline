@@ -148,7 +148,7 @@ staLMM <- function(
             # try to fix assuming they jusy have the rows and cols by replicate
             badRecords <- which(gridCheck > 1, arr.ind = TRUE)
             if(nrow(badRecords) > 0){
-              mydataSub <- fixCoords(mydataSub, rowcoord = "row", colcoord = "col", rep="rep")
+              mydataSub <- cgiarBase::fixCoords(mydataSub, rowcoord = "row", colcoord = "col", rep="rep")
             }
             # make the check once again in case that didn't help
             gridCheck <- with(mydataSub,table(row,col))
