@@ -43,6 +43,7 @@ staLMM <- function(
   ###################################
   # loading the dataset
   mydata <- phenoDTfile$data$pheno # extract relevant data for sta
+  originalColumns <- colnames(mydata)
   myped <- phenoDTfile$data$pedigree
   ### change column names for mapping
   paramsPheno <- phenoDTfile$metadata$pheno
@@ -99,7 +100,7 @@ staLMM <- function(
           This means that probably you didn't select the right columns to define the environment column.
           Please match again your raw file checking carefully the columns defining the environment.", call.=FALSE )
   }
-  predictionsList <- list(); counter=1
+  predictionsList <- list(); columnsToAdd <- character(); counter=1
   library(LMMsolver)
   for(iTrait in trait){ # iTrait=trait[1]
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
@@ -216,6 +217,7 @@ staLMM <- function(
               if(!inherits(mixRandom,"try-error") & ((length(factorsFittedGreater) > 0) ) ){ # if random model runs well try the fixed effect model
                 ## save residuals
                 whereResidualGoes <- mydataSub[which(!is.na(mydataSub$trait)),"rowindex"]
+                columnsToAdd <- c(columnsToAdd, paste(iTrait,"residual",sep="-"))
                 mydata[whereResidualGoes,paste(iTrait,"residual",sep="-")] <- mixRandom$residuals[,1]
                 sm <- summary(mixRandom, which = "variances")
                 newRanran <- setdiff( (sm[,1])[which(sm[,2] >0.05)] , c("residual",genoUnitTraitField,"s(row, col)"))
@@ -448,6 +450,6 @@ staLMM <- function(
   ### change column names back for mapping
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##
-  phenoDTfile$data$pheno <- mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  phenoDTfile$data$pheno <- mydata[,c(originalColumns,columnsToAdd)]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
   return(phenoDTfile)
 }
