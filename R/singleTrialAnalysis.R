@@ -49,7 +49,11 @@ staLMM <- function(
   paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
   colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  ###
+  ### make sure all expected columns are present
+  required_mapping <- c("stage", "pipeline", "country", "year", "season", "location", "trial", "environment", "rep", "iBlock", "row", "col", "designation", "gid", "entryType", "trait")
+  for(iRequired in required_mapping){
+    if(iRequired %in% colnames(mydata)){}else{mydata[,iRequired] <- NA}
+  }
   if (nrow(mydata) < 2) stop("Not enough phenotypic data is available to perform a single trial analysis. Please add the phenotypic data to your data object.", call. = FALSE)
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   mydata$rowindex <- 1:nrow(mydata)
@@ -107,9 +111,9 @@ staLMM <- function(
       mydataSub$trait <- mydataSub[,iTrait]
       # make factors
       for(iEd in c("environment","trial","row","col","rep","iBlock")){
-        if(iEd %in% colnames(mydataSub)){
+        # if(iEd %in% colnames(mydataSub)){
           mydataSub[,paste0(iEd,"F")] <-  as.factor(mydataSub[,iEd])
-        }else{  mydataSub[,paste0(iEd,"F")] <- NA; mydataSub[,iEd] <- NA   }
+        # }else{  mydataSub[,paste0(iEd,"F")] <- NA; mydataSub[,iEd] <- NA   }
       }
       for(iName in c("designation","mother","father")){
         mydataSub[,iName] <- as.factor(mydataSub[,iName])
