@@ -56,6 +56,7 @@ staLMM <- function(
                            damCol = paramsPed[paramsPed$parameter=="mother","value"],
                            sireCol = paramsPed[paramsPed$parameter=="father","value"]
                            )
+  colnames(myped) <- c("designation","mother","father")
   ### make sure all expected columns are present
   required_mapping <- c("stage", "pipeline", "country", "year", "season", "location", "trial", "environment", "rep", "iBlock", "row", "col", "designation", "gid", "entryType", "trait")
   for(iRequired in required_mapping){
