@@ -59,6 +59,7 @@ metLMM <- function(
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   if( length(setdiff(setdiff(randomTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(randomTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
+  
   # loading the metrics
   metrics <- phenoDTfile$metrics
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
@@ -281,7 +282,12 @@ metLMM <- function(
               designationFlevels <- as.character(unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"]))
 
               if(modelType %in% c("pblup","ssgblup")){ # we need to calculate NRM
-                N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
+                paramsPed <- phenoDTfile$metadata$pedigree
+                N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree,
+                                     indivCol = paramsPed[paramsPed$parameter=="designation","value"],
+                                     damCol = paramsPed[paramsPed$parameter=="mother","value"],
+                                     sireCol = paramsPed[paramsPed$parameter=="father","value"]
+                                     )
               }
               if(modelType %in% c("gblup","ssgblup")){ # we need to calculate GRM
                 commonBetweenMandP <- intersect(rownames(Markers),designationFlevels)
@@ -301,7 +307,11 @@ metLMM <- function(
               badBlankGenotype <- which(colnames(A)=="")
               if(length(badBlankGenotype) > 0){A <- A[-badBlankGenotype,-badBlankGenotype]}
               inter <- intersect(designationFlevels,colnames(A)) # go for sure
-              onlyInA <- setdiff(rownames(Markers),designationFlevels)
+              if(modelType %in% c("gblup","ssgblup")){
+                onlyInA <- setdiff(rownames(Markers),designationFlevels)
+              }else{
+                onlyInA <- setdiff(rownames(A),designationFlevels)
+              }
               differ <- setdiff(designationFlevels,inter) # are missing in A matrix
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=differ, withMarkOnly=onlyInA)
               # get inverse matrix

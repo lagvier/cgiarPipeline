@@ -49,7 +49,13 @@ staLMM <- function(
   paramsPheno <- phenoDTfile$metadata$pheno
   paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  paramsPed <- phenoDTfile$metadata$pedigree
+  # colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPed$value, Replace = paramsPed$parameter )
+  myped <- cgiarBase::nrm2(pedData= myped, verbose=FALSE,returnMatrix=FALSE,
+                           indivCol = paramsPed[paramsPed$parameter=="designation","value"],
+                           damCol = paramsPed[paramsPed$parameter=="mother","value"],
+                           sireCol = paramsPed[paramsPed$parameter=="father","value"]
+                           )
   ### make sure all expected columns are present
   required_mapping <- c("stage", "pipeline", "country", "year", "season", "location", "trial", "environment", "rep", "iBlock", "row", "col", "designation", "gid", "entryType", "trait")
   for(iRequired in required_mapping){
