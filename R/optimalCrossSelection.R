@@ -1,7 +1,7 @@
 ocs <- function(
     phenoDTfile= NULL, # analysis to be picked from predictions database
     analysisId=NULL,
-    relDTfile= NULL,
+    relDTfile= NULL, # "nrm", "grm", "both"
     trait= NULL, # per trait
     environment="across",
     nCross=20,
@@ -30,8 +30,15 @@ ocs <- function(
   }
   otherTraits <- setdiff(unique(mydata$trait), trait)
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
-    if(is.null(phenoDTfile$data$pedigree)){stop("Pedigree information is not available for this dataset. Please upload it if planning to use an NRM.", call. = FALSE)}
-    N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree)
+    if(length(intersect(paramsPed$value, colnames(phenoDTfile$data$pedigree)))  < 3){
+      stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
+    }
+    paramsPed <- phenoDTfile$metadata$pedigree
+    N <- cgiarBase::nrm2(pedData=phenoDTfile$data$pedigree,
+                         indivCol = paramsPed[paramsPed$parameter=="designation","value"],
+                         damCol = paramsPed[paramsPed$parameter=="mother","value"],
+                         sireCol = paramsPed[paramsPed$parameter=="father","value"]
+                         )
   }
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
     M <- phenoDTfile$data$geno
