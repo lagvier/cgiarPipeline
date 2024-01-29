@@ -19,8 +19,7 @@ metLMM <- function(
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(is.null(traitFamily)){traitFamily <- rep("quasi(link = 'identity', variance = 'constant')", length(trait))}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
-  if(length(fixedTerm) == 0){stop("Please provide your fixed effect terms.", call. = FALSE)}
-  # if(length(randomTerm) == 0){stop("Please provide your randomTerm effect terms.", call. = FALSE)}
+  if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}
   if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){
     stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)
   }
@@ -50,6 +49,8 @@ metLMM <- function(
   traitOrig <- trait
   common <- intersect(fixedTerm,randomTerm)
   fixedTerm <- setdiff(fixedTerm,common)
+  if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}
+  # print(fixedTerm)
   if("designation" %in% randomTerm){returnFixedGeno=FALSE}else{interactionsWithGeno <- NULL; returnFixedGeno<- TRUE} # don't allow interactions if genotype is not random from start
   ############################
   # loading the dataset
@@ -112,6 +113,7 @@ metLMM <- function(
   mydata$rowindex <- 1:nrow(mydata)
   ##############################
   ## met analysis
+  # print(randomTerm)
   predictionsList <- list(); counter=counter2=1
   traitToRemove <- character()
   for(iTrait in trait){ # # iTrait = trait[1]  iTrait="value"
@@ -335,6 +337,7 @@ metLMM <- function(
               myGinverse <- list(designation=Ainv)
             }
           }
+          if(returnFixedGeno){myGinverse <- NULL}
           if(length(ranran) == 0){ranFormulation=NULL}else{ranFormulation=as.formula(ranran)}
           if(useWeights){
             weightsFormulation="w"
@@ -355,7 +358,9 @@ metLMM <- function(
             silent = TRUE
           )
           myGinverse <- NULL      #
-          currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across", parameter=c("fixedFormula","randomFormula","family","designationType"), value=c(fix,ranran,traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+          currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+                                        parameter=c("fixedFormula","randomFormula","family","designationType"), 
+                                        value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
           phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
           # print(mix$VarDf)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
@@ -592,9 +597,7 @@ metLMM <- function(
                                            )
               )
             }
-
           }
-
           pp$environment <- "across"
           mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
           pp$entryType <- apply(data.frame(pp$designation),1,function(x){
