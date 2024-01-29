@@ -277,6 +277,7 @@ staLMM <- function(
                     pp$trait <- iTrait
                     pp$environmentF <- iField
                     pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "##"),"unknown_type"); return(x2)})
+                    if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                     ## heritabilities
                     ss = mixRandom$VarDf#summary(mixRandom, which = "variances")
                     rownames(ss) <- ss$VarComp
@@ -293,7 +294,7 @@ staLMM <- function(
                     predictionsList[[counter]] <- pp
                     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                  data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                            parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"),
+                                                            parameter=c("plotH2","CV", "r2","Vg","Vr"), method= paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), iGenoUnit, sep = "-" ),
                                                             value=c(vg/(vg+vr), cv, mean(pp$reliability), vg, vr ),
                                                             stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0, 0)
                                                  )
@@ -334,6 +335,7 @@ staLMM <- function(
                   pp$trait <- iTrait
                   pp$environmentF <- iField
                   pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+                  if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                   ## heritabilities
                   ss = mixRandom$VarDf
                   rownames(ss) <- ss$VarComp
@@ -348,7 +350,7 @@ staLMM <- function(
                   badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
                   phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                          parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"),
+                                                          parameter=c("plotH2","CV", "r2","Vg","Vr"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), iGenoUnit, sep = "-" ),
                                                           value=c(vg/(vg+vr), cv, mean(pp$reliability), vg, vr ), stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0, 0)
                                                )
                   )
@@ -366,11 +368,12 @@ staLMM <- function(
                 pp$trait <- iTrait
                 pp$environmentF <- iField
                 pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+                if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
                 predictionsList[[counter]] <- pp;
                 cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                        parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"),
+                                                        parameter=c("plotH2","CV", "r2","Vg","Vr"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), iGenoUnit, sep = "-") ,
                                                         value=c(0, cv, 0, 0, 0 ),
                                                         stdError=c(0,0,0,0, 0)
                                              )
@@ -389,11 +392,12 @@ staLMM <- function(
               pp$trait <- iTrait
               pp$environmentF <- iField
               pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+              if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
               predictionsList[[counter]] <- pp;
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                      parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"),
+                                                      parameter=c("plotH2","CV", "r2","Vg","Vr"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), sep = "-") ,
                                                       value=c(0, cv, 0, 0, 0 ), stdError=c(0,0,0,0,0)
                                            )
               )
@@ -417,13 +421,14 @@ staLMM <- function(
             pp$trait <- iTrait
             pp$environmentF <- iField
             pp$entryType <- apply(data.frame(pp$designation),1,function(x){found <-which(mydataSub$designation %in% x); x2 <- ifelse(length(found) > 0, paste(sort(unique(toupper(trimws(mydataSub[found,"entryType"])))), collapse = "#"),"unknown_type"); return(x2)})
+            if(iGenoUnit != "designation"){pp$entryType <- paste(iGenoUnit, pp$entryType, sep = "##" )}
             pp$reliability <- 1e-6
             predictionsList[[counter]] <- pp;
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
 
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                          data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                    parameter=c("plotH2","CV", "r2","Vg","Vr"), method=c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"),
+                                                    parameter=c("plotH2","CV", "r2","Vg","Vr"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML"), iGenoUnit, sep = "-") ,
                                                     value=c(0, cv, 0,0,0 ), stdError=c(0,0,0,0, 0)
                                          )
             )
