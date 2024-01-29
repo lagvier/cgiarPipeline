@@ -20,7 +20,7 @@ metLMM <- function(
   if(is.null(traitFamily)){traitFamily <- rep("quasi(link = 'identity', variance = 'constant')", length(trait))}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   if(length(fixedTerm) == 0){stop("Please provide your fixed effect terms.", call. = FALSE)}
-  if(length(randomTerm) == 0){stop("Please provide your randomTerm effect terms.", call. = FALSE)}
+  # if(length(randomTerm) == 0){stop("Please provide your randomTerm effect terms.", call. = FALSE)}
   if(modelType %in% c("gblup","ssgblup","rrblup") & is.null(phenoDTfile$data$geno)){
     stop("Please include marker information in your data structure to fit this model type.", call. = FALSE)
   }
