@@ -3,7 +3,7 @@ staLMM <- function(
     analysisId=NULL,
     trait=NULL, # per trait
     traitFamily=NULL,
-    fixedTerm=c("1","designation"),
+    fixedTerm=c("1"),
     genoUnit = c("designation"),
     maxit=50,
     returnFixedGeno=TRUE,
@@ -18,7 +18,9 @@ staLMM <- function(
   if(is.null(traitFamily)){traitFamily <- rep("gaussian(link = 'identity')", length(trait))}
   if(length(traitFamily) != length(trait)){stop("Trait distributions should have the same length than traits to be analyzed.", call. = FALSE)}
   names(traitFamily) <- trait
-  fixedTerm <- unique(c("1",fixedTerm,"designation"))
+  # fixedTerm <- unique(c("1",fixedTerm,"designation"))
+  fixedTerm <- unique(c("1", genoUnit))
+  
   '%!in%' <- function(x,y)!('%in%'(x,y))
   if(is.null(phenoDTfile$metrics)){
     provMet <- as.data.frame(matrix(nrow=0, ncol=7))
@@ -68,7 +70,7 @@ staLMM <- function(
     if(iRequired %in% colnames(mydata)){}else{mydata[,iRequired] <- NA}
   }
   if (nrow(mydata) < 2) stop("Not enough phenotypic data is available to perform a single trial analysis. Please add the phenotypic data to your data object.", call. = FALSE)
-  if( length(setdiff(setdiff(fixedTerm,"1"),colnames(mydata))) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
+  if( length(setdiff(setdiff(fixedTerm,"1"),c( colnames(mydata), colnames(myped) ) )) > 0 ){stop(paste("column(s):", paste(setdiff(setdiff(fixedTerm,"1"),colnames(mydata)), collapse = ","),"couldn't be found."), call. = FALSE)}
   mydata$rowindex <- 1:nrow(mydata)
 
   # merge mother and father information
@@ -210,9 +212,11 @@ staLMM <- function(
             #
             ranran <- paste(c(myGeneticUnit, unique(intersect(randomTermForRanModel,newRandom)) ), collapse = " + ")
             randomFormulaForRanModel <- paste("~",ranran)
+            
+            
 
             # at least one condition met: replicated random terms, or replicated fixed terms
-            if( (length(factorsFittedGreater) > 0)  ){
+            if( (length(factorsFittedGreater) > 0) | (median(table(mydataSub[,iGenoUnit]), na.rm=TRUE) > 1.5) ){
 
               mixRandom <- try( # first model with genotypes as random
                 LMMsolver::LMMsolve(fixed =as.formula(fixedFormulaForRanModel),
@@ -226,7 +230,7 @@ staLMM <- function(
               phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               # if random model run only keep variance components that were greater than zero and fit again
               # with genotypes as fixed
-              if(!inherits(mixRandom,"try-error") & ((length(factorsFittedGreater) > 0) ) ){ # if random model runs well try the fixed effect model
+              if(!inherits(mixRandom,"try-error") ){ # if random model runs well try the fixed effect model  # & ((length(factorsFittedGreater) > 0) )
                 ## save residuals
                 whereResidualGoes <- mydataSub[which(!is.na(mydataSub$trait)),"rowindex"]
                 columnsToAdd <- c(columnsToAdd, paste(iTrait,"residual",sep="-"))
