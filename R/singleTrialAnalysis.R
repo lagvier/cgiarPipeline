@@ -223,7 +223,7 @@ staLMM <- function(
                                     data = mydataSub, maxit = maxit),
                 silent = TRUE
               );  # mixRandom$VarDf
-              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationType"), value=c(fixedFormulaForRanModel,randomFormulaForRanModel,as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c(fixedFormulaForRanModel,randomFormulaForRanModel,as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
               phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               # if random model run only keep variance components that were greater than zero and fit again
               # with genotypes as fixed
@@ -402,7 +402,7 @@ staLMM <- function(
                                                       value=c(0, cv, 0, 0, 0 ), stdError=c(0,0,0,0,0)
                                            )
               )
-              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationType"), value=c("None","None","None","None","mean"))
+              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c("None","None","None","None","mean"))
               phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               counter=counter+1
               
@@ -436,7 +436,7 @@ staLMM <- function(
                                          )
             )
             
-            currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationType"), value=c("None","None","None","None","mean"))
+            currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c("None","None","None","None","mean"))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
             counter=counter+1
             

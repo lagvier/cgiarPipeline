@@ -359,7 +359,7 @@ metLMM <- function(
           )
           myGinverse <- NULL      #
           currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
-                                        parameter=c("fixedFormula","randomFormula","family","designationType"), 
+                                        parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
                                         value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
           phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
           # print(mix$VarDf)
@@ -596,6 +596,11 @@ metLMM <- function(
                                                       stdError=c(0,0,0,0)
                                            )
               )
+              currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+                                            parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
+                                            value=c("None","None","None","mean"))
+              phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+              
             }
           }
           pp$environment <- "across"
