@@ -194,7 +194,7 @@ metLMM <- function(
           }
           if(!is.null(randomTerm)){
             if(modelType == "rrblup"){
-              reduced <- with(mydataSub,cgiarPIPE::redmm(x=designation,M=Mtrait, nPC=nPC, returnLam = TRUE))
+              reduced <- with(mydataSub,sommer::redmm(x=designation,M=Mtrait, nPC=nPC, returnLam = TRUE))
               LGrp[["QTL"]] <- c((ncol(mydataSub)+1):(ncol(mydataSub)+ncol(reduced$Z)))
               mydataSub <- cbind(mydataSub,reduced$Z)
               rTermsTrait <- randomTerm[which(apply(data.frame(randomTerm),1,function(x){length(table(mydataSub[,x]))}) > 1)]
@@ -376,7 +376,7 @@ metLMM <- function(
               ##
               Mfull <- Markers
               if((ncol(Mfull) < nrow(Mfull)) | nPC==0){M2 <- Mfull}else{  M2 <- tcrossprod(Mfull)}
-              xx2 = with(mydataSub, cgiarPIPE::redmm(x=designation, M=M2, nPC=nPC, returnLam = TRUE)) # we need the new lambda for the fullt marker matrix
+              xx2 = with(mydataSub, sommer::redmm(x=designation, M=M2, nPC=nPC, returnLam = TRUE)) # we need the new lambda for the fullt marker matrix
               ss <- mix$VarDf;  rownames(ss) <- ss$VarComp
               pp <- list()
               for(iGroup in names(LGrp)){ # iGroup <- names(LGrp)[1]  for each rrBLUP effect
