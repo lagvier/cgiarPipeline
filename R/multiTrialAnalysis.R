@@ -26,7 +26,7 @@ metLMM <- function(
   if(modelType %in% c("gblup","ssgblup","rrblup") & !is.null(phenoDTfile$data$geno)){
     Markers <- phenoDTfile$data$geno
     if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id
-      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data.", call. = FALSE)}
+      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data. Please go to the 'Markers QA/QC' module prior to run a gBLUP or rrBLUP model.", call. = FALSE)}
     }else{ # user provided a modifications Id
       modificationsMarkers <- phenoDTfile$modifications$geno
       theresMatch <- which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications)
