@@ -141,7 +141,7 @@ metLMM <- function(
       mydataSub$pipeline <- as.factor(mydataSub$pipeline) # move to factor
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
       ## build the environmental index
-      ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean); colnames(ei)[2] <- "envIndex0"
+      ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean, na.rm=TRUE); colnames(ei)[2] <- "envIndex0"
       ei <- ei[with(ei, order(envIndex0)), ]
       ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
       colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
@@ -160,11 +160,11 @@ metLMM <- function(
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
         # center variables
         for(iMeta in numericMetas){
-          metas[,iMeta] <- metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
+          metas[,iMeta] <- scale(metas[,iMeta]) # metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
         }
         metas <- metas[which(metas$environment %in% goodFields),]
         colnames(metas) <- cgiarBase::replaceValues(colnames(metas), Search = paste0("envIndex_", iTrait), Replace = "envIndex")
-        mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE)
+        mydataSub <- merge(mydataSub,metas[,c("environment","envIndex")], by="environment", all.x = TRUE)
       }
       ## define the interactions to be used
       if(!is.null(interactionsWithGeno)){
@@ -224,7 +224,7 @@ metLMM <- function(
             if(modelType == "rrblup"){
               for(iInteraction in unique(interactionsWithGenoTrait)){ # iInteraction <- unique(interactionsWithGenoTrait)[1]
                 LGrp[[paste0("QTL",iInteraction)]] <- c((ncol(mydataSub)+1):(ncol(mydataSub)+ncol(reduced$Z)))
-                mydataSub <- cbind(mydataSub,reduced$Z*mydataSub[,iInteraction])
+                mydataSub <- cbind(mydataSub, apply(reduced$Z,2,function(z){z*mydataSub[,iInteraction]}) ) # reduced$Z*mydataSub[,iInteraction])
                 rTermsTrait <- c(rTermsTrait,paste0("grp(QTL",iInteraction,")"))
               }
             }else{
@@ -357,7 +357,7 @@ metLMM <- function(
                                 data = mydataSub, maxit = maxIters),
             silent = TRUE
           )
-          myGinverse <- NULL      #
+          myGinverse <- NULL      # mix
           currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
                                         parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
                                         value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
