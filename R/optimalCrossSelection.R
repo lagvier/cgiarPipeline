@@ -8,6 +8,7 @@ ocs <- function(
     targetAngle=30, # in radians
     verbose=FALSE,
     maxRun=100,
+    numberBest=100,
     entryType=NULL
 ){
   ## THIS FUNCTION CALCULATES THE OPTIMAL CROSS SELECTION USING A TRAIT AND A RELATIONSHIP MATRIX
@@ -53,12 +54,15 @@ ocs <- function(
   if(relDTfile %in% c("nrm")){ A <- N  }
   myrel <- A
   
-  utraits <- unique(mydata$trait)
+  utraits <- unique(mydata$trait) # traits available
   if (!trait %in% utraits){
     stop(paste0("'", trait, "' is not present in the given dataset or the entryType doesn't correspond."), call. = FALSE)
   }
   mydata <- mydata[which(mydata$trait %in% trait),]
   mydata <- mydata[which(mydata$environment %in% environment),] # make sure only across
+  mydata <- mydata[with(mydata, order(-predictedValue)), ]
+  mydata <- mydata[1:min(c(nrow(mydata), numberBest)),]
+  
   if(nrow(mydata) == 0){stop("Please check the trait and environment selected since there's no phenotypic data for that combination",call. = "FALSE")}
   # make sure you have same phenotypes and genotypes
   
