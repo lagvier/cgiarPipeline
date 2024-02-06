@@ -141,7 +141,7 @@ staLMM <- function(
       # check the genetic units
       nLevelsGenounit <- apply(data.frame(genoUnit),1,function(x){length(table(mydataSub[,x])) }); names(nLevelsGenounit) <- genoUnit
       genoUnitTraitField <- names(nLevelsGenounit)[which(nLevelsGenounit > 1)]
-      
+      if(length(genoUnitTraitField)==0){stop(paste("There is not enough levels in your specified genetic unit(s):", paste(genoUnit, collapse = ", "), ". Please make sure that you have mapped your column(s) in the data retrieval sections for phenotype (designation) and pedigree (mother and father)." ),call. = FALSE)}
       nLevelsFixedunit <- apply(data.frame(setdiff(fixedTerm,"1")),1,function(x){length(table(mydataSub[,x])) }); names(nLevelsFixedunit) <- setdiff(fixedTerm,"1")
       badLevelsFixedunit <- names(nLevelsFixedunit)[which(nLevelsFixedunit <= 1)]
       fixedTermTraitField <- unique(c("1",setdiff(fixedTerm,badLevelsFixedunit)))
