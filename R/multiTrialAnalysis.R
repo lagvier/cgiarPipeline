@@ -7,6 +7,7 @@ metLMM <- function(
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
     heritLB= 0.15,  heritUB= 0.95,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
+    nMarkersRRBLUP=1000,
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     verbose=TRUE
@@ -37,6 +38,7 @@ metLMM <- function(
         if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
       }
     }
+    Markers <- Markers[,sample(1:min(c(ncol(Markers), nMarkersRRBLUP)))] # don't use all the markers if goes beyond 1K
   }
   if(is.null(phenoDTfile$metadata$weather)){
     provMet <- as.data.frame(matrix(nrow=0, ncol=3))
