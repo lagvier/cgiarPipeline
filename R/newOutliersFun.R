@@ -1,9 +1,9 @@
 
-newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno, traitLBOutqPheno, traitUBOutqPheno)
-  # save(myObject, file = "./R/outputs/resultQAraw.RData")
+newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno, traitLBOutqPheno, traitUBOutqPheno){
+
   mydata <- myObject$data$pheno
   ### change column names for mapping
-  paramsPheno <- data()$metadata$pheno
+  paramsPheno <- myObject$metadata$pheno
   paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
   ###
