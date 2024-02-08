@@ -175,7 +175,7 @@ metLMM <- function(
         for(iInter in 1:length(interactionsWithGenoTrait)){
           if(interactionsWithGenoTrait[iInter] %in% colnames(mydataSub)){ # if trait is even there in dataset
             checkInters <- length(unique(mydataSub[,interactionsWithGenoTrait[iInter]]))
-            if (checkInters < 2){ # there needs to be at least more than one level
+            if (checkInters < 3){ # there needs to be at least more than one level
               interactionsWithGenoToRemove <- c(interactionsWithGenoToRemove,interactionsWithGenoTrait[iInter])
             }
           }else{ # remove straight away
