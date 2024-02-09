@@ -52,5 +52,19 @@ singleCrossMat <- function( # single cross matrix function
     M <- matrix(NA, nrow=0, ncol=ncol(M1)); colnames(M) <- colnames(M1)
   }
   object$data$geno <- rbind(object$data$geno,M)
+  # other tables
+  object$status <- rbind( object$status, data.frame(module="scm", analysisId=analysisId))
+  ## add which data was used as input
+  modeling <- data.frame(module="scm",  analysisId=analysisId, trait=c("none"), environment="general",
+                         parameter= c("allHybrids"), value= c(allHybrids ))
+  object$modeling <- rbind(object$modeling, modeling[, colnames(object$modeling)])
+  ##
+  object$metrics <- rbind(object$metrics,
+                               data.frame(module="scm",analysisId=analysisId, trait= "none", environment="across",
+                                          parameter=c("nHybrids"), method=c("(Md + Mf) * (1/2)"),
+                                          value=c( nrow(M)  ),
+                                          stdError=c(NA)
+                               )
+  )
   return(object)
 }
