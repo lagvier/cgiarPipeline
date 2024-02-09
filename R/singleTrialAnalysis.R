@@ -471,6 +471,6 @@ staLMM <- function(
   ### change column names back for mapping
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##
-  phenoDTfile$data$pheno <- mydata[,c(originalColumns,columnsToAdd)]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  phenoDTfile$data$pheno <- mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
   return(phenoDTfile)
 }
