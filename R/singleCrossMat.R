@@ -57,7 +57,12 @@ singleCrossMat <- function( # single cross matrix function
   ## add which data was used as input
   modeling <- data.frame(module="scm",  analysisId=analysisId, trait=c("none"), environment="general",
                          parameter= c("allHybrids"), value= c(allHybrids ))
-  object$modeling <- rbind(object$modeling, modeling[, colnames(object$modeling)])
+  if(is.null(object$modeling)){
+    object$modeling <-  modeling
+  }else{
+    object$modeling <- rbind(object$modeling, modeling[, colnames(object$modeling)])
+  }
+  
   ##
   object$metrics <- rbind(object$metrics,
                                data.frame(module="scm",analysisId=analysisId, trait= "none", environment="across",
