@@ -54,6 +54,18 @@ staLMM <- function(
   paramsPed <- phenoDTfile$metadata$pedigree
   # colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPed$value, Replace = paramsPed$parameter )
   
+  motherColumn <- which(paramsPed$parameter == "mother")
+  if(length(motherColumn) > 0){ 
+    if(paramsPed$value[motherColumn] == ""){
+      myped$mother <- NA; paramsPed$value[motherColumn] <- "mother"
+    }
+  }
+  fatherColumn <- which(paramsPed$parameter == "father")
+  if(length(fatherColumn) > 0){ 
+    if(paramsPed$value[fatherColumn] == ""){
+      myped$father <- NA; paramsPed$value[fatherColumn] <- "father"
+    }
+  }
   if(length(intersect(paramsPed$value, colnames(myped)))  < 3){
     stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
   }
