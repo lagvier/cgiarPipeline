@@ -53,6 +53,9 @@ staLMM <- function(
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
   paramsPed <- phenoDTfile$metadata$pedigree
   # colnames(myped) <- cgiarBase::replaceValues(colnames(myped), Search = paramsPed$value, Replace = paramsPed$parameter )
+  # make sure there is no columns called mother and father in the phenotype dataset
+  badPaternalCols <- which(colnames(mydata) %in% c("mother","father"))
+  if(length(badPaternalCols) > 0){mydata <- mydata[,-badPaternalCols, drop=FALSE]}
   
   motherColumn <- which(paramsPed$parameter == "mother")
   if(length(motherColumn) > 0){ 
