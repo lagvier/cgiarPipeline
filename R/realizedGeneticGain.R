@@ -24,9 +24,16 @@ rgg <- function(
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
+  paramsPheno <- phenoDTfile$metadata$pheno
+  paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  
+  myPed <- phenoDTfile$data$pedigree
+  paramsPed <- phenoDTfile$metadata$pedigree
+  colnames(myPed) <- cgiarBase::replaceValues(colnames(myPed), Search = paramsPed$value, Replace = paramsPed$parameter )
 
-  if(is.null(phenoDTfile$data$pedigree) || (nrow(phenoDTfile$data$pedigree) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
-  mydata <- merge(mydata, phenoDTfile$data$pedigree[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
+  if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
+  mydata <- merge(mydata, myPed[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
   if(!is.null(yearsToUse)){ # reduce the dataset
     yearsToUse <- as.numeric(as.character(yearsToUse))
@@ -36,8 +43,8 @@ rgg <- function(
     entryTypeToUse <- as.character(entryTypeToUse)
     mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
   }
-  if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter.",call. = FALSE)}
-  if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.", call. = FALSE)}
+  if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter. Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section.",call. = FALSE)}
+  if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
   for(k in 1:length(trait)){

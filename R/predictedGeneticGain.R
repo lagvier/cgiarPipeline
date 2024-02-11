@@ -17,13 +17,24 @@ pgg <- function(
   # loading the dataset
   mydata <- phenoDTfile$predictions 
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  paramsPheno <- phenoDTfile$metadata$pheno
+  paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  
+  myPed <- phenoDTfile$data$pedigree
+  paramsPed <- phenoDTfile$metadata$pedigree
+  colnames(myPed) <- cgiarBase::replaceValues(colnames(myPed), Search = paramsPed$value, Replace = paramsPed$parameter )
+  
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
   if(is.null(environment)){environment <- na.omit(unique(mydata$environment))}
-  if(is.null(phenoDTfile$data$pedigree) || (nrow(phenoDTfile$data$pedigree) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
-  yearsToUse <- as.character(unique(phenoDTfile$data$pedigree$yearOfOrigin))
-  mydata <- merge(mydata, phenoDTfile$data$pedigree[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
+  if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
+  yearsToUse <- as.character(unique(myPed$yearOfOrigin))
+  mydata <- merge(mydata, myPed[,c("designation","yearOfOrigin")], by="designation", all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
-  yearsTesting <- unique(phenoDTfile$data$pheno[,c("designation","year")])
+  
+  myPheno <- phenoDTfile$data$pheno
+  colnames(myPheno) <- cgiarBase::replaceValues(colnames(myPheno), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  yearsTesting <- unique(myPheno[,c("designation","year")])
   yearsTesting <- yearsTesting[which(!duplicated(yearsTesting$designation)),]
   mydata <- merge(mydata, yearsTesting, by="designation", all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$year)),]
