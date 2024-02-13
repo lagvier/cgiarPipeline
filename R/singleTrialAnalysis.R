@@ -238,8 +238,6 @@ staLMM <- function(
                                     data = mydataSub, maxit = maxit),
                 silent = TRUE
               );  # mixRandom$VarDf
-              currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), value=c(fixedFormulaForRanModel,randomFormulaForRanModel,as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
-              phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
               # if random model run only keep variance components that were greater than zero and fit again
               # with genotypes as fixed
               if(!inherits(mixRandom,"try-error") ){ # if random model runs well try the fixed effect model  # & ((length(factorsFittedGreater) > 0) )
@@ -268,6 +266,7 @@ staLMM <- function(
                                       data = mydataSub, maxit = maxit),
                   silent = TRUE
                 ) # mixFixed$VarDf
+                
                 ##################################################################
                 ## if model fails try the simplest model, no random and no spatial
                 if(inherits(mixFixed,"try-error") ){
@@ -279,6 +278,11 @@ staLMM <- function(
                   )
                   if( inherits(mixFixed,"try-error") ){
                     if(verbose){cat(paste("Fixed effects models failed. Returning deregressed BLUPs \n"))}
+                    currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, 
+                                                  parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), 
+                                                  value=c( fixedFormulaForRanModel,randomFormulaForRanModel,
+                                                           as.character(newSpline)[2],traitFamily[iTrait],"BLUP"))
+                    phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
                     predictedValue <-  mixRandom$coefMME[mixRandom$ndxCoefficients[[iGenoUnit]]] +  mixRandom$coefMME[mixRandom$ndxCoefficients$`(Intercept)`]
                     dims <- mixRandom$EDdf
                     start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) + 1 # we add the one when is random
@@ -318,6 +322,12 @@ staLMM <- function(
                     counter=counter+1
                   }
                 }else{ # fixed model run
+                  currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, 
+                                                parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), 
+                                                value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
+                                                        ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
+                                                        as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+                  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
                   
                   if(returnFixedGeno){ # user wants fixed effect predictions for genotype
                     shouldBeOne <- which(mixFixed$ndxCoefficients[[iGenoUnit]] == 0)
@@ -394,6 +404,12 @@ staLMM <- function(
                                                         stdError=c(0,0,0,0, 0)
                                              )
                 )
+                currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, 
+                                              parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), 
+                                              value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
+                                                       ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
+                                                       as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+                phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
                 counter=counter+1
               } # end of is mixed model run well
               

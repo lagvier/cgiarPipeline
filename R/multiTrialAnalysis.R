@@ -54,7 +54,8 @@ metLMM <- function(
   if(length(fixedTerm) == 0 | is.null(fixedTerm)){fixedTerm <- "1"}
   # print(fixedTerm)
   if("designation" %in% randomTerm){returnFixedGeno=FALSE}else{interactionsWithGeno <- NULL; returnFixedGeno<- TRUE} # don't allow interactions if genotype is not random from start
-  ############################
+  if(!"designation" %in% randomTerm){modelType <- "blue"}
+   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions #
   if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
@@ -79,7 +80,7 @@ metLMM <- function(
     surrogate <- "GEBV"
   }else if(modelType == "ssgblup"){
     surrogate <- "ssGEBV"
-  }
+  }else{surrogate <- "PV"}
   # if user didn't provide a table for which environments should be included make it
   if(is.null(envsToInclude)){
     envsToInclude=  as.data.frame( do.call( rbind, list (with(mydata, table(environment,trait)) ) ) )
@@ -282,7 +283,7 @@ metLMM <- function(
               myGinverse <- NULL
               groupTrait <- LGrp
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
-            }else{ # if user wants to do a gblup, pblup or ssgblup model
+            }else if(modelType %in% "gblup"){ # if user wants to do a gblup, pblup or ssgblup model
               designationFlevels <- as.character(unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"]))
 
               if(modelType %in% c("pblup","ssgblup")){ # we need to calculate NRM
@@ -337,6 +338,10 @@ metLMM <- function(
               A1inv <- NULL; A2inv <- NULL;
               levelsInAinv <- colnames(Ainv)
               myGinverse <- list(designation=Ainv)
+            }else{ # blue model
+              inter <- character()
+              onlyInA <- character() # genotypes only present in A and not in dataset
+              differ <- character()
             }
           }
           if(returnFixedGeno){myGinverse <- NULL}
