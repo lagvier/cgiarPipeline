@@ -24,14 +24,16 @@ rgg <- function(
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
-  paramsPheno <- phenoDTfile$metadata$pheno
-  paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
-  colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
+  # paramsPheno <- phenoDTfile$metadata$pheno
+  # paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
+  # colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
   
   myPed <- phenoDTfile$data$pedigree
   paramsPed <- phenoDTfile$metadata$pedigree
   colnames(myPed) <- cgiarBase::replaceValues(colnames(myPed), Search = paramsPed$value, Replace = paramsPed$parameter )
-
+  myPed <- unique(myPed[,c(gTerm,fixedTerm)])
+  
+  
   if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   mydata <- merge(mydata, myPed[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]

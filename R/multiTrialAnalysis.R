@@ -98,6 +98,7 @@ metLMM <- function(
     }
   }
   trait <- setdiff(trait,traitToRemove)
+  if(length(trait)==0){stop("None of the traits specified are available. Please double check", call. = FALSE)}
   traitToRemove <- character()
   if(!is.null(envsToInclude)){
     for(k in 1:length(trait)){
@@ -365,12 +366,13 @@ metLMM <- function(
             silent = TRUE
           )
           myGinverse <- NULL      # mix
-          currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
-                                        parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
-                                        value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
-          phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+         
           # print(mix$VarDf)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
+            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+                                          parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
+                                          value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+            phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             if(is.null(phenoDTfile$metadata$weather)){numericMetas <- character()}
             for(iIndex in c(numericMetas,"envIndex")){
               if( (iIndex %in% interactionsWithGenoTrait) ){names(mix$ndxCoefficients[[paste0("designation:",iIndex)]]) <- names(mix$ndxCoefficients$designation) } # copy same names than main designation effect
@@ -506,12 +508,13 @@ metLMM <- function(
                 start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) # we don't add a one because we need the intercept
                 pev <- as.matrix(solve(mix$C))[start:(start+length(predictedValue)-1),start:(start+length(predictedValue)-1)]
                 stdError <- (sqrt(diag(pev)))
+                designation <- gsub("designation_","", names(predictedValue))
               }else{ # user wants random effect predictions for genotype (main effect)
                 predictedValue <- genEva$designation$predictedValue
                 stdError <- genEva$designation$stdError
                 pev <- genEva$designation$pev
+                designation <- gsub("designation","", names(predictedValue))
               }
-              designation <- gsub("designation","", names(predictedValue))
               pp <- data.frame(designation,predictedValue,stdError)
               ss = mix$VarDf; rownames(ss) <- ss$VarComp
               Vg <- ss["designation",2]; Vr <- ss["residual",2]
@@ -552,11 +555,12 @@ metLMM <- function(
                         dims <- mix$EDdf
                         start <- sum(dims[1:(which(dims$Term == iGenoUnit) - 1),"Model"]) # we don't add a one because we need the intercept
                         stdError <- (sqrt(diag(as.matrix(solve(mix$C)))))[start:(start+length(predictedValue)-1)]
+                        designation <- gsub("designation_","", names(predictedValue))
                       }else{ # user wants random effect predictions for genotype:envIndex
                         predictedValue <- genEva[[iGenoUnit]]$predictedValue #+ mix$coefficients$`(Intercept)`
                         stdError <- genEva[[iGenoUnit]]$stdError
+                        designation <- gsub("designation","", names(predictedValue))
                       }
-                      designation <- gsub("designation","", names(predictedValue))
                       pp2 <- data.frame(designation,predictedValue,stdError)
                       Vg <- ss[iGenoUnit,2];
                       if(iGenoUnit %in% fixedTermTrait){pp$reliability <- 1e-6}else{pp2$reliability <- genEva[[iGenoUnit]]$R2}
