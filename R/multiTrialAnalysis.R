@@ -371,7 +371,7 @@ metLMM <- function(
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
                                           parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
-                                          value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+                                          value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait], toupper(modelType) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             if(is.null(phenoDTfile$metadata$weather)){numericMetas <- character()}
             for(iIndex in c(numericMetas,"envIndex")){
