@@ -139,9 +139,9 @@ metLMM <- function(
       print(paste("There was no predictions to work with in trait",iTrait,". Please look at your H2 boundaries. You may be discarding all envs."))
       traitToRemove <- c(traitToRemove,iTrait)
     }else{
-      mydataSub$designation <- as.factor(mydataSub$designation) # move to factor
-      mydataSub$environment <- as.factor(mydataSub$environment) # move to factor
-      mydataSub$pipeline <- as.factor(mydataSub$pipeline) # move to factor
+      for(iTerm in unique(c(fixedTerm, randomTerm))){
+        mydataSub[,iTerm] <- as.factor(mydataSub[,iTerm]) # move to factor
+      }
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
       ## build the environmental index
       ei <- aggregate(predictedValue~environment, data=mydataSub,FUN=mean, na.rm=TRUE); colnames(ei)[2] <- "envIndex0"
