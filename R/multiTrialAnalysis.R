@@ -62,9 +62,9 @@ metLMM <- function(
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   # add the other available columns to the dataset
   metaPheno <- phenoDTfile$metadata$pheno[which(phenoDTfile$metadata$pheno$parameter %in% c("environment","year","season","country","location","trial")),]
-  otherMetaCols <- unique(phenoDTfile$data$pheno[,metaPheno$value])
+  otherMetaCols <- unique(phenoDTfile$data$pheno[,metaPheno$value,drop=FALSE])
   colnames(otherMetaCols) <- cgiarBase::replaceValues(Source = colnames(otherMetaCols), Search = metaPheno$value, Replace = metaPheno$parameter )
-  otherMetaCols <- otherMetaCols[which(!duplicated(otherMetaCols[,"environment"])),] # we do this in case the users didn't define the environment properly
+  otherMetaCols <- otherMetaCols[which(!duplicated(otherMetaCols[,"environment"])),,drop=FALSE] # we do this in case the users didn't define the environment properly
   mydata <- merge(mydata, otherMetaCols, by="environment", all.x = TRUE)
   # some checks after filtering
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
