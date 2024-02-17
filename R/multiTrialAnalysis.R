@@ -42,7 +42,7 @@ metLMM <- function(
     Markers <- Markers[,sample(1:min(c(ncol(Markers), nMarkersRRBLUP)))] # don't use all the markers if goes beyond 1K
   }
   if(is.null(phenoDTfile$metadata$weather)){ # avoid an error when there is no weather information
-    provMet <- as.data.frame(matrix(nrow=0, ncol=3));  colnames(provMet) <- c("environment", "parameter" ,  "value")
+    provMet <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
     phenoDTfile$metadata$weather <- provMet
   }
   names(traitFamily) <- trait
@@ -148,15 +148,18 @@ metLMM <- function(
       ei <- ei[with(ei, order(envIndex0)), ]
       ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
       colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
-      ei$parameter <- paste0("envIndex_",iTrait)
+      ei$trait <- iTrait # paste0(iTrait,"-envIndex")
+      ei$parameter <- "envIndex" # paste0(iTrait,"-envIndex")
       # update the weather metadata
       phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
-      toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated()))
+      toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))
       phenoDTfile$metadata$weather <- phenoDTfile$metadata$weather[toKeep,]
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
       if(!is.null(phenoDTfile$metadata$weather)){
         metas <- phenoDTfile$metadata$weather;
-        metas <- reshape(metas, direction = "wide", idvar = "environment",
+        metas <- metas[which(metas[,"trait"] == iTrait),]
+        metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
+                         idvar = "environment",
                          timevar = "parameter", v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","", colnames(metas))
         metasClass <- unlist(lapply(metas,class))
