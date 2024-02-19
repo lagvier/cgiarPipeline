@@ -1,4 +1,4 @@
-rgg <- function(
+rggMackay <- function(
     phenoDTfile= NULL,
     analysisId=NULL,
     trait=NULL, # per trait
@@ -17,23 +17,16 @@ rgg <- function(
   if(is.null(phenoDTfile)){stop("Please provide the name of the analysis to locate the predictions", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the ID of the analysis to use as input", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
-  # phenoDTfile$data$pedigree <- unique(phenoDTfile$predictions[,c(gTerm,"mother","father")])
-  # phenoDTfile$data$pedigree$yearOfOrigin <- sample(2000:2023, nrow(phenoDTfile$data$pedigree), replace = TRUE)
   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
-  # paramsPheno <- phenoDTfile$metadata$pheno
-  # paramsPheno <- paramsPheno[which(paramsPheno$parameter != "trait"),]
-  # colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  
+  # add male, female and yearOfOrigin columns
   myPed <- phenoDTfile$data$pedigree
   paramsPed <- phenoDTfile$metadata$pedigree
   colnames(myPed) <- cgiarBase::replaceValues(colnames(myPed), Search = paramsPed$value, Replace = paramsPed$parameter )
   myPed <- unique(myPed[,c(gTerm,fixedTerm)])
-  
-  
   if(is.null(myPed) || (nrow(myPed) == 0 ) ){stop("yearOfOrigin column was not matched in your original file. Please correct.", call. = FALSE)}
   mydata <- merge(mydata, myPed[,c(gTerm,fixedTerm)], by=gTerm, all.x=TRUE )
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
@@ -126,6 +119,7 @@ rgg <- function(
           inter <- median(p4, na.rm=TRUE); seb1 <- median(p5, na.rm=TRUE); seb0<- median(p6, na.rm=TRUE)
           r2 <- median(p7, na.rm=TRUE); pv <- median(p8, na.rm=TRUE)
         }else{
+          mydataSub <- do.call(rbind, hh)
           mix <- lm(as.formula(fix), data=mydataSub)
           sm <- summary(mix)
           gg <- sm$coefficients[2,1]*ifelse(deregress,deregressWeight,1)
