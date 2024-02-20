@@ -79,7 +79,7 @@ rggPiepho <- function(
       mydataSub[,iMetaCol] <- as.factor(mydataSub[,iMetaCol])
     }
     val <- stdError <- list()
-    for(iBoot in 1:bootstrappingN){
+    for(iBoot in 1:bootstrappingN){ # iBoot=1
       ll <- split(mydataSub, mydataSub$environment)
       ll <- lapply(ll, function(x){y <- x[sample(1:nrow(x), min(c(nrow(x), sampleN)) ),]; return(y)})
       mydataSub2 <- do.call(rbind, ll)
@@ -126,12 +126,11 @@ rggPiepho <- function(
           b1 <- mixCoeff$yearOfOrigin[1,"value"] #*ifelse(deregress,deregressWeight,1)
           seb1 <- mixCoeff$yearOfOrigin[1,"se"]
           seb0 <- mixCoeff$`(Intercept)`[1,"se"]
-          
-          
           baseline <- b0 + ( b1*min(as.numeric(mydataSub2[which(mydataSub2$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
           b1Perc <- round(( b1 /baseline) * 100,3)
           b1PercSe <- round((seb1/baseline) * 100,3)
-          
+          ngt <- baseline + mixCoeff$year$value
+          ngtSe <- mixCoeff$year$se
           r2 <- NA # sm$r.squared
           pv <- NA# 1 - pf(sm$fstatistic[1], df1=sm$fstatistic[2], df2=sm$fstatistic[3])
           
@@ -140,8 +139,8 @@ rggPiepho <- function(
           ntrial <- phenoDTfile$metrics
           ntrial <- ntrial[which(ntrial$trait ==iTrait),]
           ntrial <- length(unique(ntrial$environment))
-          val[[iBoot]] <- c(b1,b0, b1Perc, r2, pv, ntrial,gg.y1,gg.yn  )
-          stdError[[iBoot]] <- c(seb1,seb0,b1PercSe,0,0,0,0,0)
+          val[[iBoot]] <- c(b1,b0, b1Perc, r2, pv, ntrial,gg.y1,gg.yn, ngt  )
+          stdError[[iBoot]] <- c(seb1,seb0,b1PercSe,0,0,0,0,0, ngtSe)
           counter=counter+1
         }
       }
@@ -155,12 +154,18 @@ rggPiepho <- function(
     val <- apply(do.call(rbind, val),2, function(x){median(x, na.rm=TRUE)})
     stdError <- apply(do.call(rbind, stdError),2, function(x){median(x, na.rm=TRUE)})
     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                 data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment="across",
-                                            parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear"), 
+                                 data.frame(module="rgg",analysisId=rggAnalysisId, trait=iTrait, environment=c(rep("across",8), mixCoeff$year$coef),
+                                            parameter=c("ggSlope","ggInter", "gg%","r2","pVal","nTrial","initialYear","lastYear",rep("nonGeneticTrend",length(mixCoeff$year$coef) )), 
                                             method=ifelse(deregress,"piephoDeregress","piepho"),
                                             value=val, stdError=stdError
                                  )
     )
+    myPreds <- data.frame(module = "rgg", analysisId = rggAnalysisId, pipeline = NA, trait = iTrait,
+               gid = NA, designation = gsub("designation_","",mixCoeff$designation$coef),
+               mother = NA, father = NA, entryType = NA,
+               environment = "across", predictedValue = mixCoeff$designation$value + baseline,
+               stdError = mixCoeff$designation$se, reliability = NA)
+    phenoDTfile$predictions <- rbind(phenoDTfile$predictions, myPreds)
     
   }
   #########################################

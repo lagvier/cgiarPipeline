@@ -85,7 +85,7 @@ rggMackay <- function(
         ranres <- "~units"#"~dsum(~units | environment)"
         mydataSub=mydataSub[with(mydataSub, order(environment)), ]
         mydataSub$w <- 1/(mydataSub$stdError)
-
+        # remove extreme outliers or influential points
         hh<-split(mydataSub,mydataSub[,fixedTerm])
         hh <- lapply(hh,function(x){
           outlier <- boxplot.stats(x=x[, "predictedValue"],coef=1.5 )$out
@@ -147,6 +147,10 @@ rggMackay <- function(
         currentModeling <- data.frame(module="rgg", analysisId=rggAnalysisId,trait=iTrait, environment="across",
                                       parameter=c("deregression","partitionedModel"), value=c(deregress, partition))
         phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+        myPreds <- mydataSub[,colnames(phenoDTfile$predictions)]
+        myPreds$module <- "rgg"
+        myPreds$analysisId <- rggAnalysisId
+        phenoDTfile$predictions <- rbind(phenoDTfile$predictions, myPreds)
         counter=counter+1
       }
     }
