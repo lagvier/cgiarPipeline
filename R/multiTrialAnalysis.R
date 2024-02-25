@@ -131,6 +131,9 @@ metLMM <- function(
     ## remove records without marker data if marker effects
     if(modelType == "rrblup"){ # if rrBLUP model we remove records without markers
       mydataSub <- mydataSub[which(mydataSub$designation %in% rownames(Markers)),]
+      if(nrow(mydataSub) == 0 & verbose){
+        cat("There was no match between markers and phenotypes. Maybe your threshold to discard individuals has lead to remove from marker information all the individuals that are present in the phenotypic dataset.")
+      }
       Mtrait <- Markers[which(rownames(Markers) %in% unique(mydataSub$designation)),]
     }
     LGrp <- list();   groupTrait <- NULL # in case of GxE models to store the grouping

@@ -43,7 +43,7 @@ ocs <- function(
   }
   if(relDTfile %in% c("grm","both")){ # we need to calculate GRM
     M <- phenoDTfile$data$geno
-    if(is.null(M)){stop("Markers are not available for this dataset. Please upload them.", call. = FALSE)}
+    if(is.null(M)){stop("Markers are not available for this dataset. OCS requires pedigree or markers to work. Please upload any of these in the data retrieval tabs.", call. = FALSE)}
     if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
       A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
     }else{ A <- sommer::A.mat(M) };  M <- NULL
