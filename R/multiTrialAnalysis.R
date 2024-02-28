@@ -142,7 +142,7 @@ metLMM <- function(
       print(paste("There was no predictions to work with in trait",iTrait,". Please look at your H2 boundaries. You may be discarding all envs."))
       traitToRemove <- c(traitToRemove,iTrait)
     }else{
-      for(iTerm in unique(c(fixedTerm, randomTerm))){
+      for(iTerm in setdiff(unique(c(fixedTerm, randomTerm)),"1")){
         mydataSub[,iTerm] <- as.factor(mydataSub[,iTerm]) # move to factor
       }
       mydataSub <- mydataSub[which(mydataSub$designation != ""),] # remove blank designations
