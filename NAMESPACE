@@ -2,8 +2,9 @@ importFrom("grDevices", "dev.cur", "dev.new", "dev.next", "dev.set")
 importFrom("graphics", "axis", "lines", "par", "points", "title")
 importFrom("stats", "cov", "dist", "median", "model.matrix", "optimize", "pbeta", "ppoints", "predict", "smooth.spline","var")
 export(
-       staLMM, metLMM, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg, newOutliersFun, 
-       singleCrossMat, modifExpDesign
+       traitTransformation,newOutliersFun, modifExpDesign,
+       staLMM, metLMM, indexDesire, baseIndex, ocs, rggMackay, rggPiepho, pgg, 
+       singleCrossMat
        )
 
 
