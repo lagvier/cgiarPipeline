@@ -5,7 +5,8 @@ traitTransformation <- function(
     verbose=FALSE
 ){
   if(is.null(object)){stop("Please provide the name of the file to be used for analysis", call. = FALSE)}
-  if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
+  if(is.null(trait)){stop("Please provide traits to be converted", call. = FALSE)}
+  if(length(trait)==0){stop("Please select at least one trait conversion to apply this function.", call. = FALSE)}
   if(length(trait) != length(transformation)){stop("The vector of transformations required need to be as many as the number of traits and viceversa.", call. = FALSE)}
   cbrt <- function(x){return(x^(1/3))}
   traitOrig <- trait
