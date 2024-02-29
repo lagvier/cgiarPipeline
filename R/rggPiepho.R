@@ -36,6 +36,7 @@ rggPiepho <- function(
   mydata <- mydata[which(!is.na(mydata$yearOfOrigin)),]
   # add the other available columns to the dataset
   metaPheno <- phenoDTfile$metadata$pheno[which(phenoDTfile$metadata$pheno$parameter %in% c("environment","year","season","country","location","trial")),]
+  
   otherMetaCols <- unique(phenoDTfile$data$pheno[,metaPheno$value,drop=FALSE])
   colnames(otherMetaCols) <- cgiarBase::replaceValues(Source = colnames(otherMetaCols), Search = metaPheno$value, Replace = metaPheno$parameter )
   otherMetaCols <- otherMetaCols[which(!duplicated(otherMetaCols[,"environment"])),,drop=FALSE] # we do this in case the users didn't define the environment properly
@@ -99,12 +100,17 @@ rggPiepho <- function(
               print("Using predicted values directly. Assuming you are providing BLUEs.")
             }
           }
-          mydataSub2[,"designationLocationYear"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"location"], mydataSub2[,"year"])
-          mydataSub2[,"designationLocation"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"location"])
+          # mydataSub2[,"designationLocationYear"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"location"], mydataSub2[,"year"])
+          # mydataSub2[,"designationLocation"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"location"])
           mydataSub2[,"designationEnvironment"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"environment"])
-          mydataSub2[,"designationYear"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"year"])
-          mydataSub2[,"locationYear"] <- paste0(mydataSub2[,"location"],mydataSub2[,"year"])
-          fix <- paste("predictedValue ~ year + yearOfOrigin + environment")
+          # mydataSub2[,"designationYear"] <- paste0(mydataSub2[,"designation"],mydataSub2[,"year"])
+          # mydataSub2[,"locationYear"] <- paste0(mydataSub2[,"location"],mydataSub2[,"year"])
+          if(length(which(metaPheno$parameter == "year")) > 0){
+            fix <- paste("predictedValue ~ year + yearOfOrigin + environment")
+          }else{
+            fix <- paste("predictedValue ~ yearOfOrigin + environment")
+          }
+          
           random <- "~designation + designationEnvironment"
           ranres <- "~units"#"~dsum(~units | environment)"
           mydataSub2=mydataSub2[with(mydataSub2, order(environment)), ]
@@ -129,8 +135,13 @@ rggPiepho <- function(
           baseline <- b0 + ( b1*min(as.numeric(mydataSub2[which(mydataSub2$trait == iTrait),fixedTerm]) , na.rm=TRUE ))
           b1Perc <- round(( b1 /baseline) * 100,3)
           b1PercSe <- round((seb1/baseline) * 100,3)
-          ngt <- baseline + mixCoeff$year$value
-          ngtSe <- mixCoeff$year$se
+          if(length(which(metaPheno$parameter == "year")) > 0){
+            ngt <- baseline + mixCoeff$year$value
+            ngtSe <- mixCoeff$year$se
+          }else{
+            ngt <- NA
+            ngtSe <- NA
+          }
           r2 <- NA # sm$r.squared
           pv <- NA# 1 - pf(sm$fstatistic[1], df1=sm$fstatistic[2], df2=sm$fstatistic[3])
           
