@@ -2,7 +2,7 @@
 \alias{staLMM}
 
 \title{
-Single-trial analysis using LMM
+Single-trial analysis pipeline using LMM
 }
 \description{
 Perform the single-trial analysis per trait (see Details section).
@@ -26,7 +26,7 @@ staLMM(
 The data object structure produced from bioflow which contains data, metadata, modifications and tables of results (metrics, predictions, modeling, status), in order to pick the necessary information to calculate an index.
 }
 \item{analysisId}{
-A numeric id to link to the predictions to be used for the selection index.
+A numeric id to link to the predictions to be used for the analysis.
 }
 \item{trait}{
 A character vector with the traits that should be fitted.

@@ -2,7 +2,7 @@
 \alias{metLMM}
 
 \title{
-Multi-environmental trial analysis using LMM
+Multi-environmental trial analysis pipeline using LMM
 }
 \description{
 Perform the multi-trial genetic evaluation according to the Finlay-Wilkinson regression approach (see Details section).
@@ -26,7 +26,7 @@ metLMM(
 The data object structure produced from bioflow which contains data, metadata, modifications and tables of results (metrics, predictions, modeling, status), in order to pick the necessary information to calculate an index.
 }
 \item{analysisId}{
-A numeric id to link to the predictions to be used for the selection index.
+A numeric id to link to the predictions to be used for the analysis.
 }
 \item{analysisIdForGenoModifications}{
 A numeric id to link to the modifications table to be used to modify the marker information in case the user fit an rrBLUP or GBLUP model.

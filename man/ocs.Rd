@@ -2,7 +2,7 @@
 \alias{ocs}
 
 \title{
-Optimal cross selection
+Optimal cross selection pipeline
 }
 \description{
 Perform the optimal cross selection based on Woolliams et al. (2015).

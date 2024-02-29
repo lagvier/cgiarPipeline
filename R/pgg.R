@@ -34,10 +34,16 @@ pgg <- function(
   
   myPheno <- phenoDTfile$data$pheno
   colnames(myPheno) <- cgiarBase::replaceValues(colnames(myPheno), Search = paramsPheno$value, Replace = paramsPheno$parameter )
-  yearsTesting <- unique(myPheno[,c("designation","year")])
-  yearsTesting <- yearsTesting[which(!duplicated(yearsTesting$designation)),]
-  mydata <- merge(mydata, yearsTesting, by="designation", all.x=TRUE )
-  mydata <- mydata[which(!is.na(mydata$year)),]
+  
+  if(length(which(paramsPheno$parameter == "year")) == 0){
+    mydata$year <- mydata$yearOfOrigin 
+    cat("Year column was not mapped")
+  }else{
+    yearsTesting <- unique(myPheno[,c("designation","year")])
+    yearsTesting <- yearsTesting[which(!duplicated(yearsTesting$designation)),]
+    mydata <- merge(mydata, yearsTesting, by="designation", all.x=TRUE )
+    mydata <- mydata[which(!is.na(mydata$year)),]
+  }
   ############################
   ## gg analysis
   p <- proportion/100

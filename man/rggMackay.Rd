@@ -2,7 +2,7 @@
 \alias{rggMackay}
 
 \title{
-Realized genetic gain (Mackay's method).
+Realized genetic gain pipeline (Mackay's method).
 }
 \description{
 Performs a realized genetic gain estimation using the two-stage analysis (Mackay et al., 2011).
@@ -26,7 +26,7 @@ rggMackay(
 The data object structure produced from bioflow which contains data, metadata, modifications and tables of results (metrics, predictions, modeling, status), in order to pick the necessary information to calculate an index.
 }
 \item{analysisId}{
-A numeric id to link to the predictions to be used for the selection index.
+A numeric id to link to the predictions to be used for the analysis.
 }
 \item{trait}{
 A character vector with the traits that should be fitted.
