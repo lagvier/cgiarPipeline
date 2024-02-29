@@ -7,15 +7,21 @@
 This package has been developed primarily for computing breeding analytic pipelines such as single trial analysis, multi-trial analysis, population structure, etc. The focus of the package is pipelines related to the use and understanding of evolutionary forces. Is currently structured by evolutionary forces:
 
 Selection modules
+
 + Genetic evalaution modules
+
 + Selection hitory modules
 
 Mutation
+
 + Gene discovery modules
+
 + Mutation history modules
 
 Gene flow and drift modules
+
 + Gene frequencies modules
+
 + Drift history modules
 
 QC & Transformation modules

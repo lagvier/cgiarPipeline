@@ -85,4 +85,4 @@ final <- indexDesire(
 tail(final$predictions)
 
 }
-\seealso{\code{\link{mmer}} -- the core function of the package }
+
