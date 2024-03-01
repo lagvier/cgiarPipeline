@@ -503,5 +503,9 @@ staLMM <- function(
   colnames(mydata) <- cgiarBase::replaceValues(colnames(mydata), Replace = paramsPheno$value,  Search= paramsPheno$parameter )
   ##
   phenoDTfile$data$pheno <- mydata[,unique(c(originalColumns,columnsToAdd))]#mydata[,-which(colnames(mydata) %in% c("mother","father") )]
+  ## add which analysisId was used as input
+  modeling <- data.frame(module="sta",  analysisId=staAnalysisId, trait=c("inputObject"), environment="general",
+                         parameter= c("analysisId"), value= c(analysisId ))
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling)
   return(phenoDTfile)
 }
