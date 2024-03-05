@@ -359,7 +359,7 @@ metLMM <- function(
             weightsFormulation=NULL
             if(verbose){print("Ignoring weights in the analysis. Residual variance will be estimated.")  }
           }
-          options(spam.cholsymmetrycheck=FALSE)
+          # options(spam.cholsymmetrycheck=FALSE)
           mix <- try(
             LMMsolver::LMMsolve(fixed =as.formula(fix),
                                 random = ranFormulation,
