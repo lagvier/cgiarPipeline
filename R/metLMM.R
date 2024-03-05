@@ -595,7 +595,7 @@ metLMM <- function(
 
           }else{ # if model failed
             if(modelType == "rrblup"){
-              # do nothing
+              cat(paste("Model failed for trait:", iTrait))
             }else{
               if(verbose){ cat(paste("Mixed model failed for this combination. Aggregating and assuming h2 = 0 \n"))}
               pp <- aggregate(predictedValue ~ designation, FUN=mean, data=mydataSub)
@@ -620,27 +620,30 @@ metLMM <- function(
               
             }
           }
-          pp$environment <- "across"
-          mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-          pp$entryType <- apply(data.frame(pp$designation),1,function(x){
-            found <- which(mydataForEntryType$designation %in% x)
-            if(length(found) > 0){
-              x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-            }else{x2 <- "unknown"}
-            return(x2)
-          })
-          mydataForEntryType <- NULL
-          if(modelType == "rrblup"){
-            pp$entryType <- "markerEffect"
-          }else{
-            pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate),
-                                  pp$entryType,
-                                  ifelse(as.character(pp$designation) %in% onlyInA, "predicted", "tested"),
-                                  sep="_")
+          if(!inherits(mix,"try-error") ){ # if model worked well save the results
+            pp$environment <- "across"
+            mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
+            pp$entryType <- apply(data.frame(pp$designation),1,function(x){
+              found <- which(mydataForEntryType$designation %in% x)
+              if(length(found) > 0){
+                x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
+              }else{x2 <- "unknown"}
+              return(x2)
+            })
+            mydataForEntryType <- NULL
+            if(modelType == "rrblup"){
+              pp$entryType <- "markerEffect"
+            }else{
+              pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate),
+                                    pp$entryType,
+                                    ifelse(as.character(pp$designation) %in% onlyInA, "predicted", "tested"),
+                                    sep="_")
+            }
+            ###
+            predictionsList[[counter2]] <- pp;
+            counter=counter+1
           }
-          ###
-          predictionsList[[counter2]] <- pp;
-          counter=counter+1
+
         }
       }
     }
