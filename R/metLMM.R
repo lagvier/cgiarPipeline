@@ -359,6 +359,7 @@ metLMM <- function(
             weightsFormulation=NULL
             if(verbose){print("Ignoring weights in the analysis. Residual variance will be estimated.")  }
           }
+          options(spam.cholsymmetrycheck=FALSE)
           mix <- try(
             LMMsolver::LMMsolve(fixed =as.formula(fix),
                                 random = ranFormulation,
@@ -427,7 +428,7 @@ metLMM <- function(
               }
               pp <- do.call(rbind,pp)
               ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            }else{ # user wants to do genetic evaluation
+            }else{ # user wants to do relationship-based genetic evaluation
 
 
               if(length(grep("designation", ranran)) > 0){ # geno was random
