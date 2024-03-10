@@ -31,7 +31,7 @@
 # temporal<-"hourly" #daily,monthly
 
 # Funtion for download Climate from NASA  ---------------------------------
-nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest){
+nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,temporal="hourly"){
 
 # Climate data ------------------------------------------------------------
     WTH<-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
