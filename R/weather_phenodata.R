@@ -31,19 +31,33 @@
 # temporal<-"hourly" #daily,monthly
 
 # Funtion for download Climate from NASA  ---------------------------------
-nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,temporal="hourly"){
+nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments, temporal="hourly"){
 
 # Climate data ------------------------------------------------------------
-    WTH<-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
-                            lonlat = c(LONG,LAT), #Decimal degrees
-                            pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
-                            dates = c(date_planted, date_harvest),#YYYY-MM-DD
-                            temporal_api = temporal) %>%
-          dplyr::mutate(datetime=ISOdate(YEAR, MO, DY,HR),
-                date=as.Date(datetime))
+  wthList <- metaList <- list()
+  for(iEnv in 1:length(environments)){ # iEnv=1
+    prov <-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
+                              lonlat = c(LONG[iEnv],LAT[iEnv]), #Decimal degrees
+                              pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
+                              dates = c(date_planted[iEnv], date_harvest[iEnv]),#YYYY-MM-DD
+                              temporal_api = temporal) %>%
+      dplyr::mutate(datetime=ISOdate(YEAR, MO, DY,HR),
+                    date=as.Date(datetime))
+    prov$environment <- environments[iEnv]
+    # metadata
+    meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR"),
+                parameter=c(rep("mean",3), rep("sd",3)),
+                value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE))
+    )
+    # save
+    wthList[[iEnv]] <- as.data.frame(prov)
+    metaList[[iEnv]] <-  meta
+  }
+  WTH <- do.call(rbind,wthList)
+  descriptive <- do.call(rbind, metaList)
 
 # descriptive  --------------------------------------------------------
-  descriptive<-summary(dplyr::select(WTH,RH2M,T2M,PRECTOTCORR))
+  # descriptive<-summary(dplyr::select(WTH,RH2M,T2M,PRECTOTCORR))
 
 # Outputs -----------------------------------------------------------------
   output<- list(WTH = WTH,
