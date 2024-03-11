@@ -45,9 +45,9 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
                     date=as.Date(datetime))
     prov$environment <- environments[iEnv]
     # metadata
-    meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR"),
-                parameter=c(rep("mean",3), rep("sd",3)),
-                value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE))
+    meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
+                parameter=c(rep("mean",3), rep("sd",3), c("coordinate", "coordinate", "date", "date")),
+                value= c( apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,mean, na.rm=TRUE), apply(prov[,c("RH2M","T2M","PRECTOTCORR")],2,sd, na.rm=TRUE), c(LAT[iEnv], LONG[iEnv], date_planted[iEnv], date_harvest[iEnv] ) )
     )
     # save
     wthList[[iEnv]] <- as.data.frame(prov)
