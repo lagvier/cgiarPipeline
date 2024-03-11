@@ -3,7 +3,8 @@ singleCrossMat <- function( # single cross matrix function
   object= NULL,
   hybridBatch=1000,
   allHybrids=FALSE,
-  verbose=TRUE
+  verbose=TRUE,
+  separator=":"
 ){
   analysisId <- as.numeric(Sys.time())
   ############################
@@ -30,6 +31,8 @@ singleCrossMat <- function( # single cross matrix function
     possible <- which(possible == 2)
     res1 <- list(data.used=cross[possible,]) 
   }
+  res1$data.used <- res1$data.used[which(!is.na(res1$data.used$Var1) & !is.na(res1$data.used$Var2)),]
+  res1$data.used <- res1$data.used[sample(1:nrow(res1$data.used), nrow(res1$data.used)),]
   
   if(nrow(res1$data.used)>0){ # if there is hybrids to build
     ## build the marker matrix for batches of 1000 hybrids
