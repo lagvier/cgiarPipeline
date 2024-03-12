@@ -8,9 +8,9 @@ This package has been developed primarily for computing breeding analytic pipeli
 
 Selection modules
 
-+ Genetic evalaution modules
++ Genetic evaluation modules
 
-+ Selection hitory modules
++ Selection history modules
 
 Mutation
 
