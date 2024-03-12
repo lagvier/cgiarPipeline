@@ -3,7 +3,7 @@ Type: Package
 Title: Special functions for multiple analytical pipelines related to Biometrics procedures.
 Version: 1.0.2
 Date: 2023-09-09
-Author: Giovanny Covarrubias-Pazaran, Ibnou Dieng, Khaled AlShamaa
+Author: Giovanny Covarrubias-Pazaran, Ibnou Dieng, Khaled Al-Sham'aa, Angela Pacheco, Christian Cadena, Sergio Cruz
 Maintainer: Giovanny Covarrubias-Pazaran <covaruberpaz@gmail.com>
 Description: Software for analytical pipelines
 Depends: R (>= 3.5.0), Matrix (>= 1.1.1)
