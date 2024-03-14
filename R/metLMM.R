@@ -677,11 +677,11 @@ metLMM <- function(
   ## add which data was used as input
   modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
-  if(!is.null(analysisIdForGenoModifications)){
-    modeling <- rbind(modeling, data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
-                                           parameter= c("analysisId"), value= c(analysisIdForGenoModifications ))
-    )
-  }
+  # if(!is.null(analysisIdForGenoModifications)){
+  #   modeling <- rbind(modeling, data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
+  #                                          parameter= c("analysisId"), value= c(analysisIdForGenoModifications ))
+  #   )
+  # }
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
