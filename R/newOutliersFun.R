@@ -1,6 +1,7 @@
 
 newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno, traitLBOutqPheno, traitUBOutqPheno){
 
+  if(is.null(outlierCoefOutqPheno)){outlierCoefOutqPheno <- NA}
   mydata <- myObject$data$pheno
   ### change column names for mapping
   paramsPheno <- myObject$metadata$pheno
