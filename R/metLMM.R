@@ -10,6 +10,7 @@ metLMM <- function(
     nMarkersRRBLUP=1000,
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
+    minimumNumberEnvsFW=3,
     verbose=TRUE
 ){
   ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING LMM SOLVER
@@ -191,7 +192,7 @@ metLMM <- function(
         for(iInter in 1:length(interactionsWithGenoTrait)){
           if(interactionsWithGenoTrait[iInter] %in% colnames(mydataSub)){ # if trait is even there in dataset
             checkInters <- length(unique(mydataSub[,interactionsWithGenoTrait[iInter]]))
-            if (checkInters < 3){ # there needs to be at least more than one level
+            if (checkInters < minimumNumberEnvsFW){ # there needs to be at least more than one level
               interactionsWithGenoToRemove <- c(interactionsWithGenoToRemove,interactionsWithGenoTrait[iInter])
               print(paste(interactionsWithGenoTrait[iInter], "removed for trait", iTrait))
             }
