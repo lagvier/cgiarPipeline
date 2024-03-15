@@ -10,7 +10,7 @@ metLMM <- function(
     nMarkersRRBLUP=1000,
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
-    minimumNumberEnvsFW=3,
+    minimumNumberEnvsFW=6,
     verbose=TRUE
 ){
   ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING LMM SOLVER
@@ -165,7 +165,8 @@ metLMM <- function(
         set1 <- which(metas$parameter == iTrait) # set of environmental means for iTrait
         set2 <- which(metas$parameter %in% c("mean","date","coordinate") ) # set of weather means
         metas <- metas[c(set1,set2),]
-        
+        metas$feature <- paste(metas$environment, metas$trait, metas$parameter)
+        metas <- metas[!duplicated(metas$feature),]
         # metas <- metas[which(metas[,"trait"] == iTrait),]
         metas <- reshape(metas[,c("environment","trait","value")], direction = "wide",
                          idvar = "environment",
@@ -175,15 +176,18 @@ metLMM <- function(
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
         # center variables
         for(iMeta in numericMetas){ # iMeta = numericMetas[9]
-          if( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0) { # only add if there is variation in this environmental covariate
+          if( ( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0 ) & (length(which(!is.na(metas[,iMeta]))) > minimumNumberEnvsFW) ) { # only add if there is variation in this environmental covariate and we have enough data points
             metas[,iMeta] <- scale(metas[,iMeta]) # metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
           }else{
             metas <- metas[,-which(colnames(metas) == iMeta), drop=FALSE]
+            print(paste(iMeta, "removed from trait", iTrait, "because doesn't met conditions of variance or minimum number of environments."))
           }
         }
-        metas <- metas[which(metas$environment %in% goodFields),]
+        metas <- metas[which(metas$environment %in% goodFields),, drop=FALSE]
         # colnames(metas) <- cgiarBase::replaceValues(colnames(metas), Search = paste0("envIndex_", iTrait), Replace = "envIndex")
-        mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) # [,c("environment","envIndex")]
+        if(ncol(metas) > 1){ # if we kept some variables merge
+          mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) # [,c("environment","envIndex")]
+        }
       }
       ## define the interactions to be used
       if(!is.null(interactionsWithGeno)){

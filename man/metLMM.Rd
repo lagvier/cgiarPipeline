@@ -17,7 +17,7 @@ metLMM(
     heritLB= 0.15,  heritUB= 0.95, modelType="blup",
     nMarkersRRBLUP=1000, deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
-    verbose=TRUE
+    minimumNumberEnvsFW=6, verbose=TRUE
 )
 }
 
@@ -81,6 +81,9 @@ A numeric value indicating how many individuals should be predicted per batch at
 }
 \item{tolParInv}{
 A numeric value to indicate the tolerance value to add when a matrix is not invertible.
+}
+\item{minimumNumberEnvsFW}{
+A numeric value indicating what is the minimum number of environments that should have weather or environmental indices information to be run in the Finlay-Wilkinson regression approach. The default is to have at least 6.
 }
 \item{verbose}{
 Should the logs or warninig messages of the analysis be printed?
