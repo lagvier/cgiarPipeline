@@ -18,7 +18,8 @@ rggPiepho(
     verbose=TRUE,
     traitFamily=NULL,
     sampleN=50, 
-    bootstrappingN=10
+    bootstrappingN=10,
+    forceRules=TRUE
 )
 }
 
@@ -52,6 +53,9 @@ Number of individuals to sample per environment to perform the analysis. Include
 }
 \item{bootstrappingN}{
 Number of bootstrap samples.
+}
+\item{forceRules}{
+A TRUE/FALSE statement declaring if we should enforce the rule of Excellence in Breeding of minimum 6 years of data to perform realized genetic gain analysis.
 }
 
 }

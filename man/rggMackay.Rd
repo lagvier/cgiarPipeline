@@ -17,7 +17,8 @@ rggMackay(
     partition=FALSE,
     yearsToUse=NULL,
     entryTypeToUse=NULL,
-    verbose=TRUE
+    verbose=TRUE,
+    forceRules=TRUE
 )
 }
 
@@ -48,6 +49,9 @@ A selection of entry types to use for the realized genetic gain calculation.
 }
 \item{verbose}{
 Should the logs or warninig messages of the analysis be printed?
+}
+\item{forceRules}{
+A TRUE/FALSE statement declaring if we should enforce the rule of Excellence in Breeding of minimum 6 years of data to perform realized genetic gain analysis.
 }
 
 }

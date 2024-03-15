@@ -151,8 +151,8 @@ metLMM <- function(
       ei <- ei[with(ei, order(envIndex0)), ]
       ei$envIndex <- ei$envIndex0 - mean(ei$envIndex0)
       colnames(ei) <- cgiarBase::replaceValues(colnames(ei), Search = "envIndex0", Replace = "value")
-      ei$trait <- iTrait # paste0(iTrait,"-envIndex")
-      ei$parameter <- "envIndex" # paste0(iTrait,"-envIndex")
+      ei$parameter <- iTrait # paste0(iTrait,"-envIndex")
+      ei$trait <- "envIndex" # paste0(iTrait,"-envIndex")
       # update the weather metadata
       phenoDTfile$metadata$weather <- rbind(phenoDTfile$metadata$weather,ei[,colnames(phenoDTfile$metadata$weather)])
       toKeep <- rownames(unique(phenoDTfile$metadata$weather[,c("environment","trait","parameter")])) # only keep unique records using rownames (alternatively we could use which(!duplicated(phenoDTfile$metadata$weather[,c("environment","parameter")])))
@@ -160,20 +160,29 @@ metLMM <- function(
       ## add metadata from environment(e.g., weather) as new columns of the phenotype dataset in case the user wants to model it
       if(!is.null(phenoDTfile$metadata$weather)){
         metas <- phenoDTfile$metadata$weather;
-        metas <- metas[which(metas[,"trait"] == iTrait),]
-        metas <- reshape(metas[,c("environment","parameter","value")], direction = "wide",
+        # metas$feature <- paste(metas$parameter, metas$trait, sep="_")
+        set1 <- which(metas$parameter == iTrait) # set of environmental means for iTrait
+        set2 <- which(metas$parameter %in% c("mean","date","coordinate") ) # set of weather means
+        metas <- metas[c(set1,set2),]
+        
+        # metas <- metas[which(metas[,"trait"] == iTrait),]
+        metas <- reshape(metas[,c("environment","trait","value")], direction = "wide",
                          idvar = "environment",
-                         timevar = "parameter", v.names = "value", sep= "_")
+                         timevar = "trait", v.names = "value", sep= "_")
         colnames(metas) <- gsub("value_","", colnames(metas))
         metasClass <- unlist(lapply(metas,class))
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
         # center variables
-        for(iMeta in numericMetas){
-          metas[,iMeta] <- scale(metas[,iMeta]) # metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
+        for(iMeta in numericMetas){ # iMeta = numericMetas[9]
+          if( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0) { # only add if there is variation in this environmental covariate
+            metas[,iMeta] <- scale(metas[,iMeta]) # metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
+          }else{
+            metas <- metas[,-which(colnames(metas) == iMeta), drop=FALSE]
+          }
         }
         metas <- metas[which(metas$environment %in% goodFields),]
-        colnames(metas) <- cgiarBase::replaceValues(colnames(metas), Search = paste0("envIndex_", iTrait), Replace = "envIndex")
-        mydataSub <- merge(mydataSub,metas[,c("environment","envIndex")], by="environment", all.x = TRUE)
+        # colnames(metas) <- cgiarBase::replaceValues(colnames(metas), Search = paste0("envIndex_", iTrait), Replace = "envIndex")
+        mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) # [,c("environment","envIndex")]
       }
       ## define the interactions to be used
       if(!is.null(interactionsWithGeno)){
@@ -184,6 +193,7 @@ metLMM <- function(
             checkInters <- length(unique(mydataSub[,interactionsWithGenoTrait[iInter]]))
             if (checkInters < 3){ # there needs to be at least more than one level
               interactionsWithGenoToRemove <- c(interactionsWithGenoToRemove,interactionsWithGenoTrait[iInter])
+              print(paste(interactionsWithGenoTrait[iInter], "removed for trait", iTrait))
             }
           }else{ # remove straight away
             interactionsWithGenoToRemove <- c(interactionsWithGenoToRemove,interactionsWithGenoTrait[iInter])
@@ -380,7 +390,7 @@ metLMM <- function(
                                           value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait], toupper(modelType) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             if(is.null(phenoDTfile$metadata$weather)){numericMetas <- character()}
-            for(iIndex in c(numericMetas,"envIndex")){
+            for(iIndex in c(numericMetas,"envIndex")){ # iIndex="latitude"
               if( (iIndex %in% interactionsWithGenoTrait) ){names(mix$ndxCoefficients[[paste0("designation:",iIndex)]]) <- names(mix$ndxCoefficients$designation) } # copy same names than main designation effect
             }
             

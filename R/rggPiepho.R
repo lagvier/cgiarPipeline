@@ -8,7 +8,8 @@ rggPiepho <- function(
     verbose=TRUE,
     traitFamily=NULL,
     sampleN=50, # max number of individuals per environment to sample
-    bootstrappingN=10
+    bootstrappingN=10,
+    forceRules=TRUE
 ){
   ## THIS FUNCTION CALCULATES THE REALIZED GENETIC GAIN FOR SOME TRAITS
   ## IS USED IN THE BANAL APP UNDER THE METRICS MODULES
@@ -51,7 +52,12 @@ rggPiepho <- function(
     mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
   }
   if(nrow(mydata) == 0){stop("No data to work with with the specified parameters. You may want to check the yearsToUse parameter. Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section.",call. = FALSE)}
-  if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
+  
+  if(forceRules){ # if we enforce ABI rules for minimum years of data
+    if(length(unique(na.omit(mydata[,fixedTerm]))) <= 5){stop("Less than 5 years of data have been detected. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
+  }else{
+    if(length(unique(na.omit(mydata[,fixedTerm]))) <= 1){stop("Only one year of data. Realized genetic gain analysis cannot proceed.Maybe you have not mapped the 'yearOfOrigin' column in the Data Retrieval tad under the 'Pedigree' section. ", call. = FALSE)}
+  }
   # remove traits that are not actually present in the dataset
   traitToRemove <- character()
   for(k in 1:length(trait)){
