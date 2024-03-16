@@ -1,6 +1,7 @@
 
-newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno){
+newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno, traitLBOutqPheno = NULL, traitUBOutqPheno = NULL){
   
+  if(is.null(outlierCoefOutqPheno)){outlierCoefOutqPheno <- NA}
   mydata <- myObject$data$pheno
   ### change column names for mapping
   paramsPheno <- myObject$metadata$pheno
@@ -30,6 +31,8 @@ newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno){
       toSilence <- numeric()
       typeOut <- character()
     }
+    outOfBounds <- which((sampleDT[, trait] < traitLBOutqPheno) | (sampleDT[, trait] > traitUBOutqPheno ) )
+    if(length(outOfBounds) > 0){toSilence <- c(toSilence, sampleDT[outOfBounds,"rowindex"]); typeOut <- c(typeOut, rep("outlierIQR",length(outOfBounds))) }
     if(length(toSilence) > 0){
       outList[[counter]] <- data.frame(module="qaRaw",analysisId=analysisId,trait=trait,reason=typeOut,row=toSilence, value=NA);
       counter=counter+1
