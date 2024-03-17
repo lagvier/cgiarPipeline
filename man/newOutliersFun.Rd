@@ -9,7 +9,7 @@ Perform the outlier identification using threshold values for the interquantile 
 }
 \usage{
 newOutliersFun(myObject, trait, outlierCoefOutqPheno, 
-               traitLBOutqPheno, traitUBOutqPheno)
+               traitLBOutqPheno = NULL, traitUBOutqPheno = NULL)
 }
 
 \arguments{
