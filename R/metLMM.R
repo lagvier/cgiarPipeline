@@ -118,6 +118,7 @@ metLMM <- function(
   heritUB <- heritUB[which(traitOrig %in% trait)]
   ##############################
   ## met analysis
+  allEnvironments <- na.omit(unique(mydata[,"environment"]))
   predictionsList <- list(); counter=counter2=1
   traitToRemove <- character()
   for(iTrait in trait){ # # iTrait = trait[1]  iTrait="value"
@@ -390,10 +391,17 @@ metLMM <- function(
           
           # print(mix$VarDf)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
+            ## save the modeling used
             currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
                                           parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
                                           value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait], toupper(modelType) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+            ## save the environments used goodFields
+            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
+                                          parameter="includedInMta", 
+                                          value=ifelse(allEnvironments%in%goodFields, TRUE, FALSE))
+            phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
+            ##
             if(is.null(phenoDTfile$metadata$weather)){numericMetas <- character()}
             for(iIndex in c(numericMetas,"envIndex")){ # iIndex="latitude"
               if( (iIndex %in% interactionsWithGenoTrait) ){names(mix$ndxCoefficients[[paste0("designation:",iIndex)]]) <- names(mix$ndxCoefficients$designation) } # copy same names than main designation effect
