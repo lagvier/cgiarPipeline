@@ -178,7 +178,7 @@ metLMM <- function(
         # center variables
         for(iMeta in numericMetas){ # iMeta = numericMetas[9]
           if( ( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0 ) & (length(which(!is.na(metas[,iMeta]))) > minimumNumberEnvsFW) ) { # only add if there is variation in this environmental covariate and we have enough data points
-            metas[,iMeta] <- scale(metas[,iMeta]) # metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE)
+            metas[,iMeta] <- metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE) # scale(metas[,iMeta]) # 
           }else{
             metas <- metas[,-which(colnames(metas) == iMeta), drop=FALSE]
             print(paste(iMeta, "removed from trait", iTrait, "because doesn't met conditions of variance or minimum number of environments."))
