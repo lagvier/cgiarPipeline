@@ -31,8 +31,10 @@ newOutliersFun <- function(myObject, trait, outlierCoefOutqPheno, traitLBOutqPhe
       toSilence <- numeric()
       typeOut <- character()
     }
-    outOfBounds <- which((sampleDT[, trait] < traitLBOutqPheno) | (sampleDT[, trait] > traitUBOutqPheno ) )
-    if(length(outOfBounds) > 0){toSilence <- c(toSilence, sampleDT[outOfBounds,"rowindex"]); typeOut <- c(typeOut, rep("outlierIQR",length(outOfBounds))) }
+    if(!is.null(traitLBOutqPheno) & !is.null(traitUBOutqPheno)) {
+      outOfBounds <- which((sampleDT[, trait] < traitLBOutqPheno) | (sampleDT[, trait] > traitUBOutqPheno ) )
+      if(length(outOfBounds) > 0){toSilence <- c(toSilence, sampleDT[outOfBounds,"rowindex"]); typeOut <- c(typeOut, rep("outlierIQR",length(outOfBounds))) }
+    }
     if(length(toSilence) > 0){
       outList[[counter]] <- data.frame(module="qaRaw",analysisId=analysisId,trait=trait,reason=typeOut,row=toSilence, value=NA);
       counter=counter+1
