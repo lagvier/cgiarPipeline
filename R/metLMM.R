@@ -125,9 +125,14 @@ metLMM <- function(
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
+    # 
+    if(!is.null(envsToInclude)){
+      goodFieldsUser = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
+    }else{goodFieldsUser <- na.omit(unique(mydataSub[,"environment"]))}
     # remove bad environment
     pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2")),]
     goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > heritLB[counter2]) & (pipeline_metricsSub$value < heritUB[counter2])),"environment"])
+    goodFields <- intersect(goodFields, goodFieldsUser)
     mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
     ## remove records without marker data if marker effects
