@@ -218,6 +218,7 @@ metLMM <- function(
       # do analysis
       if(!is.na(var(mydataSub[,"predictedValue"],na.rm=TRUE))){ # if there's variance
         if( var(mydataSub[,"predictedValue"], na.rm = TRUE) > 0 ){
+          Ve <- var(mydataSub[,"predictedValue"], na.rm = TRUE)
           # make sure the terms to be fitted have more than one level
           if(deregress){
             mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
@@ -444,6 +445,7 @@ metLMM <- function(
                 pp[[iGroup]] <- data.frame(designation=rownames(predictedValue), predictedValue=predictedValue, stdError=stdError, reliability=reliability,
                                            trait=paste0(iTrait,"_",iGroup) )
                 cv <- (sd(predictedValue,na.rm=TRUE)/mean(predictedValue,na.rm=TRUE))*100
+                Ve <- Ve - Vg
                 ## save metrics
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across",
@@ -454,6 +456,10 @@ metLMM <- function(
                 )
                 counter <- counter+1
               }
+              phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
+                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
+                                                      parameter=c("Vr"), method=c("REML"), value=c( Ve ),stdError=c(0) )
+              )
               pp <- do.call(rbind,pp)
               ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             }else{ # user wants to do relationship-based genetic evaluation
@@ -551,7 +557,8 @@ metLMM <- function(
               }
               pp <- data.frame(designation,predictedValue,stdError)
               ss = mix$VarDf; rownames(ss) <- ss$VarComp
-              Vg <- ss["designation",2]; Vr <- ss["residual",2]
+              Vg <- ss["designation",2]; 
+              Ve <- Ve - Vg
               if(iGenoUnit %in% fixedTermTrait){ # add reliabilities to the data frame
                 pp$reliability <- NA
               }else{ # if random, reliability can be calculated for main effect
@@ -597,6 +604,7 @@ metLMM <- function(
                       }
                       pp2 <- data.frame(designation,predictedValue,stdError)
                       Vg <- ss[iGenoUnit,2];
+                      Ve <- Ve - Vg
                       if(iGenoUnit %in% fixedTermTrait){pp$reliability <- 1e-6}else{pp2$reliability <- genEva[[iGenoUnit]]$R2}
                       pp2$trait <- paste(iTrait,iInteractionTrait,sep="-")
                       cv <- (sd(pp2$predictedValue,na.rm=TRUE)/mean(pp2$predictedValue,na.rm=TRUE))*100
@@ -617,6 +625,11 @@ metLMM <- function(
                   
                 }
               } # if there's even interactions
+              # add the error variance
+              phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
+                                           data.frame(module="mta",analysisId=mtaAnalysisId, trait= iTrait, environment="across",
+                                                      parameter=c("Vr"), method=c("REML"), value=c( Ve ),stdError=c(0) )
+              )
               
             }
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -636,9 +649,9 @@ metLMM <- function(
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
                                                       environment="across",
-                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0),
-                                                      stdError=c(0,0,0,0)
+                                                      parameter=c("mean","CV", "r2","Vg","Vr"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML"),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, 0),
+                                                      stdError=c(0,0,0,0, 0)
                                            )
               )
               currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
@@ -648,7 +661,9 @@ metLMM <- function(
               
             }
           }
-          if(!inherits(mix,"try-error") ){ # if model worked well save the results
+          #######################################
+          # if model worked well save the results
+          if(!inherits(mix,"try-error") ){ 
             pp$environment <- "across"
             mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
             pp$entryType <- apply(data.frame(pp$designation),1,function(x){
