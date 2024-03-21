@@ -557,7 +557,7 @@ metLMM <- function(
               }
               pp <- data.frame(designation,predictedValue,stdError)
               ss = mix$VarDf; rownames(ss) <- ss$VarComp
-              Vg <- ss["designation",2]; 
+              if(iGenoUnit %in% fixedTermTrait){Vg=0}else{Vg <- ss["designation",2]; }
               Ve <- Ve - Vg
               if(iGenoUnit %in% fixedTermTrait){ # add reliabilities to the data frame
                 pp$reliability <- NA
@@ -650,7 +650,7 @@ metLMM <- function(
                                            data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
                                                       environment="across",
                                                       parameter=c("mean","CV", "r2","Vg","Vr"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML"),
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, 0),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve),
                                                       stdError=c(0,0,0,0, 0)
                                            )
               )
@@ -662,7 +662,9 @@ metLMM <- function(
             }
           }
           #######################################
-          # if model worked well save the results
+          #######################################
+          #######################################
+          # Trait run is finished. If model worked well save the results
           if(!inherits(mix,"try-error") ){ 
             pp$environment <- "across"
             mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
