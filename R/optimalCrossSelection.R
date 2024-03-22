@@ -29,7 +29,13 @@ ocs <- function(
   if(!is.null(entryType)){
     mydata <- mydata[which(mydata$entryType %in% entryType),]
   }
-  otherTraits <- setdiff(unique(mydata$trait), trait)
+  
+  if( phenoDTfile$status[phenoDTfile$status$analysisId == analysisId,"module"] == "indexD"){
+    otherTraits <- setdiff( unique(phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId, "trait"]), "inputObject")
+  }else{
+    otherTraits <- setdiff(unique(mydata$trait), trait)
+  }
+  
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
     if(length(intersect(paramsPed$value, colnames(phenoDTfile$data$pedigree)))  < 3){
       stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
@@ -153,7 +159,7 @@ ocs <- function(
   
   #########################################
   ## update structure
-  setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
+  # setdiff(colnames(predictionsBind), colnames(phenoDTfile$predictions))
   phenoDTfile$predictions <- rbind(predictionsBind, phenoDTfile$predictions[, colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="ocs", analysisId=ocsAnalysisId))
   ## add which data was used as input
