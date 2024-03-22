@@ -6,6 +6,7 @@ metLMM <- function(
     interactionsWithGeno=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
     heritLB= 0.15,  heritUB= 0.95,
+    meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
     nMarkersRRBLUP=1000,
     deregress=FALSE,  nPC=0,
@@ -49,6 +50,8 @@ metLMM <- function(
   names(traitFamily) <- trait
   heritLB <- rep(heritLB,length(trait))
   heritUB <- rep(heritUB,length(trait))
+  meanLB <- rep(meanLB,length(trait))
+  meanUB <- rep(meanUB,length(trait))
   traitOrig <- trait
   common <- intersect(fixedTerm,randomTerm)
   fixedTerm <- setdiff(fixedTerm,common) # make sure fixed and random effects don't overlap
@@ -116,6 +119,8 @@ metLMM <- function(
   if(length(trait)==0){stop("None of the traits specified are available. Please double check", call. = FALSE)}
   heritLB <- heritLB[which(traitOrig %in% trait)]
   heritUB <- heritUB[which(traitOrig %in% trait)]
+  meanLB <- meanLB[which(traitOrig %in% trait)]
+  meanUB <- meanUB[which(traitOrig %in% trait)]
   ##############################
   ## met analysis
   allEnvironments <- na.omit(unique(mydata[,"environment"]))
@@ -129,11 +134,18 @@ metLMM <- function(
     if(!is.null(envsToInclude)){
       goodFieldsUser = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
     }else{goodFieldsUser <- na.omit(unique(mydataSub[,"environment"]))}
-    # remove bad environment
+    # remove bad environment based on h2 and r2
     pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("plotH2","H2","meanR2","r2")),]
     goodFields <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > heritLB[counter2]) & (pipeline_metricsSub$value < heritUB[counter2])),"environment"])
     goodFields <- intersect(goodFields, goodFieldsUser)
     mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
+    # remove bad environment based on environment means
+    pipeline_metricsSub <- metrics[which(metrics$trait == iTrait & metrics$parameter %in% c("mean")),]
+    if(nrow(pipeline_metricsSub) > 0){ # second reduction for good environments or a given threshold
+      goodFieldsMean <- unique(pipeline_metricsSub[which((pipeline_metricsSub$value > meanLB[counter2]) & (pipeline_metricsSub$value < meanUB[counter2])),"environment"])
+      goodFields <- intersect(goodFields, goodFieldsMean)
+      mydataSub <- mydataSub[which(mydataSub$environment %in% goodFields),]
+    }
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
     ## remove records without marker data if marker effects
     if(modelType == "rrblup"){ # if rrBLUP model we remove records without markers
