@@ -32,8 +32,10 @@ ocs <- function(
   
   if( phenoDTfile$status[phenoDTfile$status$analysisId == analysisId,"module"] == "indexD"){
     otherTraits <- setdiff( unique(phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId, "trait"]), "inputObject")
+    analysisIdOtherTraits <- phenoDTfile$modeling[phenoDTfile$modeling$analysisId == analysisId & phenoDTfile$modeling$trait == "inputObject", "value"]
   }else{
     otherTraits <- setdiff(unique(mydata$trait), trait)
+    analysisIdOtherTraits <- analysisId
   }
   
   if(relDTfile %in% c("both","nrm")){ # we need to calculate NRM
@@ -131,7 +133,7 @@ ocs <- function(
       for(iTrait in otherTraits){ # iTrait <- otherTraits[1]
         
         provPredictions <- phenoDTfile$predictions
-        provPredictions <- provPredictions[which(provPredictions$analysisId %in% analysisId),]
+        provPredictions <- provPredictions[which(provPredictions$analysisId %in% analysisIdOtherTraits),]
         if(!is.null(entryType)){
           provPredictions <- provPredictions[which(provPredictions$entryType %in% entryType),]
         }

@@ -68,6 +68,7 @@ The genetic evaluation approach we use known as 'two-step' first analyze trait b
 If arguments are properly specified the function returns:
 \describe{
 \item{result}{the same input object with additional rows in the predictions, metrics, modeling and status tables.}
+\item{predictions}{the predictions table in this particular case returns in the stdError and the reliability columns the inbreeding coefficient and the OCS optimization value respectively.}
 }
 }
 
