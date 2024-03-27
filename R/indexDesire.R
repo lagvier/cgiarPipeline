@@ -60,8 +60,8 @@ indexDesire <- function(
                          environment="across",parameter=c(rep("desire",length(trait)),rep("weight",length(trait))),value=c(desirev, b ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="indexD", analysisId=idxAnalysisId))
-  modeling <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject","scaled"), environment="general",
-                         parameter= "analysisId", value= c(analysisId, scaled))
+  modeling <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject","general"), environment="general",
+                         parameter= c("analysisId","scaled"), value= c(analysisId, scaled))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
