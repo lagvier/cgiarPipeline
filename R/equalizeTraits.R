@@ -7,6 +7,7 @@ equalizeTraits <- function(object, traits, newName=NULL){
   if( newName == "" ){
     newName <- paste(traits,collapse = "_")
   }
+  newName <- gsub(" ","",newName)
   mydata[,newName] <- newValue
   object$data$pheno <- mydata
   object$metadata$pheno <- rbind( object$metadata$pheno, data.frame(parameter="trait", value=newName))
