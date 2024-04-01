@@ -1,4 +1,4 @@
-metLMM <- function(
+metML <- function(
     phenoDTfile= NULL, # analysis to be picked from predictions database
     analysisId=NULL,
     analysisIdForGenoModifications=NULL,
@@ -12,9 +12,11 @@ metLMM <- function(
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
     minimumNumberEnvsFW=6,
-    verbose=TRUE
+    verbose=TRUE,
+    yourLayers = NULL, 
+    epochs_M = 50, batchSizeToTrain=50,
 ){
-  ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING LMM SOLVER
+  ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING KERAS AND TENSORFLOW
   mtaAnalysisId <- as.numeric(Sys.time())
   if(is.null(phenoDTfile)){stop("Please provide the phenotype file", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId to be analyzed", call. = FALSE)}
