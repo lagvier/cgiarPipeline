@@ -14,7 +14,7 @@ metML <- function(
     minimumNumberEnvsFW=6,
     verbose=TRUE,
     yourLayers = NULL, 
-    epochs_M = 50, batchSizeToTrain=50,
+    epochs_M = 50, batchSizeToTrain=50
 ){
   ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING KERAS AND TENSORFLOW
   mtaAnalysisId <- as.numeric(Sys.time())
