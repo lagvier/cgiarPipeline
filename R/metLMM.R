@@ -63,6 +63,17 @@ metLMM <- function(
   mydata <- phenoDTfile$predictions #
   if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
   mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  # if the user provides two ids with same trait and environments kill the job
+  allTraitsInMyData <- unique(na.omit(mydata$trait))
+  for(iTrait in allTraitsInMyData){ # iTrait = allTraitsInMyData[1]
+    traitByIdCheck <- with(mydata[mydata$trait == iTrait, ], table(environment, analysisId))
+    traitByIdCheck <- traitByIdCheck/traitByIdCheck; 
+    checkOnPreds <- apply(traitByIdCheck,1,sum, na.rm=TRUE)
+    badIdSelection <- which( checkOnPreds > 1)
+    if(length(badIdSelection) > 0){
+      stop(paste( "You have selected multiple analysisId to be analyzed together but trait",iTrait,"has data for the same environments", paste(names(checkOnPreds)[badIdSelection], collapse =", ") ,"in the IDs provided.") , call. = FALSE)
+    }
+  }
   # add the other available columns to the dataset
   metaPheno <- phenoDTfile$metadata$pheno[which(phenoDTfile$metadata$pheno$parameter %in% c("environment","year","season","country","location","trial")),]
   otherMetaCols <- unique(phenoDTfile$data$pheno[,metaPheno$value,drop=FALSE])
