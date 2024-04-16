@@ -10,15 +10,24 @@ indexDesire <- function(
   ## IS USED IN THE BANAL APP UNDER THE GENETIC EVALUATION MODULES
   idxAnalysisId <- as.numeric(Sys.time())
   if(is.null(phenoDTfile)){stop("Please provide the name of the analysis to locate the predictions", call. = FALSE)}
-  moduleInput <- phenoDTfile$status[which(phenoDTfile$status$analysisId == analysisId),"module"]
+  moduleInput <- phenoDTfile$status[which(phenoDTfile$status$analysisId %in% analysisId),"module"]
   if(length(moduleInput)==0){stop("The file provided doesn't have the analysisId required.",call. = FALSE)}
   if(moduleInput != "mta"){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) != length(desirev)){stop("The number of traits and desirev values needs to be equal",call. = FALSE)}
   ############################
   # loading the dataset
-  mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId == analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
+  mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
+  ############################
+  # if the user provides two ids with same traits kill the job
+  traitByIdCheck <- with(mydata, table(trait, analysisId))
+  traitByIdCheck <- traitByIdCheck/traitByIdCheck; 
+  checkOnPreds <- apply(traitByIdCheck,1,sum, na.rm=TRUE)
+  badIdSelection <- which( checkOnPreds > 1)
+  if(length(badIdSelection) > 0){
+    stop(paste( "You have selected multiple analysisId to be analyzed together but trait(s)",paste(names(checkOnPreds)[badIdSelection], collapse =", "),"has data in multiple files") , call. = FALSE)
+  }
   ############################
   ## index calculation
   wide0 <- reshape(mydata[,c("designation","trait","predictedValue")], direction = "wide", idvar = "designation",
@@ -60,8 +69,10 @@ indexDesire <- function(
                          environment="across",parameter=c(rep("desire",length(trait)),rep("weight",length(trait))),value=c(desirev, b ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[,colnames(phenoDTfile$modeling)])
   phenoDTfile$status <- rbind(phenoDTfile$status, data.frame(module="indexD", analysisId=idxAnalysisId))
-  modeling <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject","general"), environment="general",
-                         parameter= c("analysisId","scaled"), value= c(analysisId, scaled))
-  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+  modeling1 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("inputObject"), environment="general",
+                         parameter= c("analysisId"), value= c(analysisId))
+  modeling2 <- data.frame(module="indexD",  analysisId=idxAnalysisId, trait=c("general"), environment="general",
+                         parameter= c("scaled"), value= c(scaled))
+  phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling1[, colnames(phenoDTfile$modeling)],modeling2[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
