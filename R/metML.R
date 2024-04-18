@@ -690,7 +690,7 @@ metML <- function(
             })
             mydataForEntryType <- NULL
             if(modelType == "rrblup"){
-              pp$entryType <- "GEBV"
+              pp$entryType <- ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"GEBV_tested", "GEBV_predicted")
             }else{
               pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate),
                                     pp$entryType,
