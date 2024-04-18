@@ -690,7 +690,7 @@ metML <- function(
             })
             mydataForEntryType <- NULL
             if(modelType == "rrblup"){
-              pp$entryType <- "markerEffect"
+              pp$entryType <- "GEBV"
             }else{
               pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate),
                                     pp$entryType,
