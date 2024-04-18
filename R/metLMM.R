@@ -471,9 +471,9 @@ metLMM <- function(
                 ## save metrics
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across",
-                                                        parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                        value=c(mean(predictedValue, na.rm=TRUE), cv, median(reliability), var(predictedValue, na.rm=TRUE)  ),
-                                                        stdError=c(0,0,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),0)
+                                                        parameter=c("mean","CV", "r2","Vg","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","n"),
+                                                        value=c(mean(predictedValue, na.rm=TRUE), cv, median(reliability), var(predictedValue, na.rm=TRUE), length(goodFields)  ),
+                                                        stdError=c(0,0,sd(reliability, na.rm = TRUE)/sqrt(length(reliability)),0, 0)
                                              )
                 )
                 counter <- counter+1
@@ -594,9 +594,9 @@ metLMM <- function(
               ## save metrics
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment="across",
-                                                      parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, mean(pp$reliability), Vg),
-                                                      stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0)
+                                                      parameter=c("mean","CV", "r2","Vg","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","n"),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, mean(pp$reliability), Vg, length(goodFields)),
+                                                      stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0, 0)
                                            )
               )
               ## genetic variances
@@ -634,9 +634,9 @@ metLMM <- function(
                       phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                    data.frame(module="mta",analysisId=mtaAnalysisId, trait=paste(iTrait,iInteractionTrait,sep="-"),
                                                               environment="across",
-                                                              parameter=c("mean","CV", "r2","Vg"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML"),
-                                                              value=c(mean(pp2$predictedValue, na.rm=TRUE), cv, mean(pp2$reliability), Vg),
-                                                              stdError=c(0,0,sd(pp2$reliability, na.rm = TRUE)/sqrt(length(pp2$reliability)),0)
+                                                              parameter=c("mean","CV", "r2","Vg","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","n"),
+                                                              value=c(mean(pp2$predictedValue, na.rm=TRUE), cv, mean(pp2$reliability), Vg, length(goodFields) ),
+                                                              stdError=c(0,0,sd(pp2$reliability, na.rm = TRUE)/sqrt(length(pp2$reliability)),0,0 )
                                                    )
                       )
                       pp <- rbind(pp,pp2) # bind predictions
@@ -671,9 +671,9 @@ metLMM <- function(
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
                                                       environment="across",
-                                                      parameter=c("mean","CV", "r2","Vg","Vr"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML"),
-                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve),
-                                                      stdError=c(0,0,0,0, 0)
+                                                      parameter=c("mean","CV", "r2","Vg","Vr","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
+                                                      value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve, length(goodFields) ),
+                                                      stdError=c(0,0,0,0, 0,0 )
                                            )
               )
               currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
@@ -744,11 +744,6 @@ metLMM <- function(
   ## add which data was used as input
   modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
-  # if(!is.null(analysisIdForGenoModifications)){
-  #   modeling <- rbind(modeling, data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
-  #                                          parameter= c("analysisId"), value= c(analysisIdForGenoModifications ))
-  #   )
-  # }
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
 }
