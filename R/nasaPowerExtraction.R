@@ -36,13 +36,58 @@ nasaPowerExtraction <- function(LAT,LONG,date_planted,date_harvest,environments,
 # Climate data ------------------------------------------------------------
   wthList <- metaList <- list()
   for(iEnv in 1:length(environments)){ # iEnv=1
-    prov <-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
-                              lonlat = c(LONG[iEnv],LAT[iEnv]), #Decimal degrees
-                              pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
-                              dates = c(date_planted[iEnv], date_harvest[iEnv]),#YYYY-MM-DD
-                              temporal_api = temporal) %>%
-      dplyr::mutate(datetime=ISOdate(YEAR, MO, DY,HR),
-                    date=as.Date(datetime))
+    if(temporal == "hourly"){
+      prov <-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
+                                  lonlat = c(LONG[iEnv],LAT[iEnv]), #Decimal degrees
+                                  pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
+                                  dates = c(date_planted[iEnv], date_harvest[iEnv]),#YYYY-MM-DD
+                                  temporal_api = temporal) %>%
+        dplyr::mutate(datetime=ISOdate(YEAR, MO, DY,HR),
+                      date=as.Date(datetime))
+    }else if(temporal == "daily"){
+      prov <-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
+                                  lonlat = c(LONG[iEnv],LAT[iEnv]), #Decimal degrees
+                                  pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
+                                  dates = c(date_planted[iEnv], date_harvest[iEnv]),#YYYY-MM-DD
+                                  temporal_api = temporal) %>%
+        dplyr::mutate(datetime=ISOdate(YEAR, MM, DD),
+                      date=as.Date(datetime))
+      colnames(prov) <- cgiarBase::replaceValues(colnames(prov), Search = c("MM","DD"), Replace = c("MO","DY") )
+    }else if(temporal == "monthly"){
+
+      timeDiff1 <- ( as.Date("2022/12/31") - date_harvest[iEnv]  )# if users selects a date newer than available, go to latest available
+      if(timeDiff1 < 0){
+        date_harvest[iEnv] <- date_harvest[iEnv] + timeDiff1 - 1
+        date_planted[iEnv] <- date_planted[iEnv] + timeDiff1 - 1
+      }
+      timeDiff2 <- date_harvest[iEnv] - date_planted[iEnv]
+      if(timeDiff1 < 365){
+        date_planted[iEnv] <- date_planted[iEnv] - (365 - timeDiff2)
+      }
+      prov <-nasapower::get_power(community = "ag", #c("ag", "re", "sb")
+                                  lonlat = c(LONG[iEnv],LAT[iEnv]), #Decimal degrees
+                                  pars = c("RH2M","T2M","PRECTOTCORR"),# "T2M_MAX","T2M_MIN"
+                                  dates = c(date_planted[iEnv], date_harvest[iEnv]),#YYYY-MM-DD
+                                  temporal_api = temporal) #%>%
+        # dplyr::mutate(datetime=ISOdate(YEAR, MM, DD),
+        #               date=as.Date(datetime))
+      provList <- split(prov, prov$PARAMETER)
+      provB <- lapply(provList, function(x){ # reshape by parameter
+        reshape(x[,setdiff(colnames(x), c("PARAMETER","ANN"))], idvar = c("LON","LAT","YEAR"), varying = list(4:15),
+                v.names = as.character(unique(x[,"PARAMETER"])) , direction = "long",
+                timevar = "MM" )
+      })
+      prov <- provB[[1]]
+      if(length(provB) > 1){
+        for(i in 2:length(provB)){
+          prov <- merge(prov, provB[[i]], by=c("LON","LAT","YEAR","MM"), all.x = TRUE )
+        }
+      }
+      prov$datetime <- ISOdate(prov$YEAR, prov$MM, 1)
+      prov$date <- as.Date(prov$datetime)
+
+    }
+
     prov$environment <- environments[iEnv]
     # metadata
     meta <- data.frame( environment=environments[iEnv], trait=c("RH2M","T2M","PRECTOTCORR",   "RH2M","T2M","PRECTOTCORR",    "latitude", "longitude", "plantingDate","harvestingDate"),
