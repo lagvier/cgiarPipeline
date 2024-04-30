@@ -40,7 +40,8 @@ metLMM <- function(
         if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
       }
     }
-    Markers <- Markers[,sample(1:min(c(ncol(Markers), nMarkersRRBLUP)))] # don't use all the markers if goes beyond 1K
+    Markers <- Markers[,sample(1:min(c(ncol(Markers), nMarkersRRBLUP)))] # don't use all the markers if goes beyond nK
+    Markers <- Markers - 1 # center markers now
   }
   if(is.null(phenoDTfile$metadata$weather)){ # avoid an error when there is no weather information
     provMet <- as.data.frame(matrix(nrow=0, ncol=4));  colnames(provMet) <- c("environment", "trait", "parameter" ,  "value")
