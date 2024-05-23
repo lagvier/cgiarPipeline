@@ -314,9 +314,10 @@ staLMM <- function(
                     predictionsList[[counter]] <- pp
                     phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                  data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                            parameter=c("plotH2","CV", "r2","Vg","Vr","mean"), method= paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-" ),
-                                                            value=c(vg/(vg+vr), cv, mean(pp$reliability), vg, vr, mean(pp$predictedValue,na.rm=TRUE) ),
-                                                            stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0, 0, 0)
+                                                            parameter=c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), 
+                                                            method= paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML", nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
+                                                            value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ),
+                                                            stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(0,nrow(ss)), 0)
                                                  )
                     )
                     counter=counter+1
@@ -325,8 +326,8 @@ staLMM <- function(
                   currentModeling <- data.frame(module="sta", analysisId=staAnalysisId,trait=iTrait,environment=iField, 
                                                 parameter=c("fixedFormula","randomFormula","spatialFormula","family","designationEffectType"), 
                                                 value=c( ifelse(returnFixedGeno, fixedFormulaForFixedModel, fixedFormulaForRanModel),
-                                                        ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
-                                                        as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
+                                                         ifelse(returnFixedGeno, as.character(randomFormulaForFixedModel)[2], randomFormulaForRanModel ),
+                                                         as.character(newSpline)[2],traitFamily[iTrait],ifelse(returnFixedGeno,"BLUE","BLUP")))
                   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, currentModeling[,colnames(phenoDTfile$modeling)])
                   
                   if(returnFixedGeno){ # user wants fixed effect predictions for genotype
@@ -376,9 +377,10 @@ staLMM <- function(
                   badRels2 <- which(pp$reliability < 0); if(length(badRels2) > 0){pp$reliability[badRels2] <- 0}
                   phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                                data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                          parameter=c("plotH2","CV", "r2","Vg","Vr","mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-" ),
-                                                          value=c(vg/(vg+vr), cv, mean(pp$reliability), vg, vr, mean(pp$predictedValue,na.rm=TRUE) ), 
-                                                          stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),0, 0, 0)
+                                                          parameter=c("plotH2","CV", "r2",paste0("V_",as.character(ss$VarComp)),"mean"), 
+                                                          method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G",rep("REML",nrow(ss)),"sum/n"), iGenoUnit, sep = "-" ),
+                                                          value=c(vg/(vg+vr), cv, mean(pp$reliability), ss$Variance, mean(pp$predictedValue,na.rm=TRUE) ), 
+                                                          stdError=c(0,0,sd(pp$reliability, na.rm = TRUE)/sqrt(length(pp$reliability)),rep(0, nrow(ss)), 0)
                                                )
                   )
                   predictionsList[[counter]] <- pp
@@ -400,7 +402,7 @@ staLMM <- function(
                 cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                        parameter=c("plotH2","CV", "r2","Vg","Vr","mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
+                                                        parameter=c("plotH2","CV", "r2","V_designation","V_residual","mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
                                                         value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ),
                                                         stdError=c(0,0,0,0, 0, 0)
                                              )
@@ -430,7 +432,7 @@ staLMM <- function(
               cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
               phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                            data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                      parameter=c("plotH2","CV", "r2","Vg","Vr", "mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), sep = "-") ,
+                                                      parameter=c("plotH2","CV", "r2","V_designation","V_residual", "mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), sep = "-") ,
                                                       value=c(0, cv, 0, 0, 0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(0,0,0,0,0,0)
                                            )
               )
@@ -463,7 +465,7 @@ staLMM <- function(
             
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                          data.frame(module="sta",analysisId=staAnalysisId, trait=iTrait, environment=iField,
-                                                    parameter=c("plotH2","CV", "r2","Vg","Vr","mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
+                                                    parameter=c("plotH2","CV", "r2","V_designation","V_residual","mean"), method=paste( c("vg/(vg+ve)","sd/mu","(G-PEV)/G","REML","REML","sum/n"), iGenoUnit, sep = "-") ,
                                                     value=c(0, cv, 0,0,0, mean(pp$predictedValue,na.rm=TRUE) ), stdError=c(0,0,0,0, 0, 0)
                                          )
             )
