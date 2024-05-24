@@ -468,7 +468,7 @@ metLMM <- function(
                 pp[[iGroup]] <- data.frame(designation=rownames(predictedValue), predictedValue=predictedValue, stdError=stdError, reliability=reliability,
                                            trait=paste0(iTrait,"_",iGroup) )
                 cv <- (sd(predictedValue,na.rm=TRUE)/mean(predictedValue,na.rm=TRUE))*100
-                Ve <- Ve - Vg
+                Ve <- mean(stdError^2)#Ve - Vg
                 ## save metrics
                 phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                              data.frame(module="mta",analysisId=mtaAnalysisId, trait= paste0(iTrait,"_",iGroup), environment="across",
@@ -581,7 +581,7 @@ metLMM <- function(
               pp <- data.frame(designation,predictedValue,stdError)
               ss = mix$VarDf; rownames(ss) <- ss$VarComp
               if(iGenoUnit %in% fixedTermTrait){Vg=0}else{Vg <- ss["designation",2]; }
-              Ve <- Ve - Vg
+              Ve <- mean(stdError^2) # Ve - Vg
               if(iGenoUnit %in% fixedTermTrait){ # add reliabilities to the data frame
                 pp$reliability <- NA
               }else{ # if random, reliability can be calculated for main effect
@@ -627,7 +627,7 @@ metLMM <- function(
                       }
                       pp2 <- data.frame(designation,predictedValue,stdError)
                       Vg <- ss[iGenoUnit,2];
-                      Ve <- Ve - Vg
+                      Ve <- mean(stdError^2) # Ve - Vg
                       if(iGenoUnit %in% fixedTermTrait){pp$reliability <- 1e-6}else{pp2$reliability <- genEva[[iGenoUnit]]$R2}
                       pp2$trait <- paste(iTrait,iInteractionTrait,sep="-")
                       cv <- (sd(pp2$predictedValue,na.rm=TRUE)/mean(pp2$predictedValue,na.rm=TRUE))*100
