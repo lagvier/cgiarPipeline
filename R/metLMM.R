@@ -90,15 +90,16 @@ metLMM <- function(
   metrics <- metrics[which(metrics$analysisId %in% analysisId),]
   #############################
   # defining the name of the surrogate depending on the model
-  if(modelType == "blup"){
-    surrogate <- "TGV"
-  }else if(modelType == "pblup"){
-    surrogate <- "EBV"
-  }else if(modelType %in% c("gblup","rrblup")){
-    surrogate <- "GEBV"
-  }else if(modelType == "ssgblup"){
-    surrogate <- "ssGEBV"
-  }else{surrogate <- "PV"}
+  surrogate <- c("TGV","EBV","GEBV","GEBV","ssGEBV","PV"); names(surrogate) <- c("blup","pblup","gblup","rrblup","ssgblup","blue")
+  # if(modelType == "blup"){
+  #   surrogate <- "TGV"
+  # }else if(modelType == "pblup"){
+  #   surrogate <- "EBV"
+  # }else if(modelType %in% c("gblup","rrblup")){
+  #   surrogate <- "GEBV"
+  # }else if(modelType == "ssgblup"){
+  #   surrogate <- "ssGEBV"
+  # }else{surrogate <- "PV"}
   # if user didn't provide a table for which environments should be included, make it! include all environments as default
   if(is.null(envsToInclude)){
     envsToInclude=  as.data.frame( do.call( rbind, list (with(mydata, table(environment,trait)) ) ) )
@@ -132,6 +133,7 @@ metLMM <- function(
   heritUB <- heritUB[which(traitOrig %in% trait)]
   meanLB <- meanLB[which(traitOrig %in% trait)]
   meanUB <- meanUB[which(traitOrig %in% trait)]
+  modelTypeTrait <- rep(modelType, length(trait)); names(modelTypeTrait) <- trait
   ##############################
   ## met analysis
   allEnvironments <- na.omit(unique(mydata[,"environment"]))
@@ -139,6 +141,7 @@ metLMM <- function(
   traitToRemove <- character()
   for(iTrait in trait){ # # iTrait = trait[1]  iTrait="value"
     if(verbose){cat(paste("Analyzing trait", iTrait,"\n"))}
+    failedMarkerModel=FALSE
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
     # 
@@ -159,7 +162,7 @@ metLMM <- function(
     }
     if(verbose){print(paste("Fields included:",paste(goodFields,collapse = ",")))}
     ## remove records without marker data if marker effects
-    if(modelType == "rrblup"){ # if rrBLUP model we remove records without markers
+    if(modelTypeTrait[iTrait] == "rrblup"){ # if rrBLUP model we remove records without markers
       mydataSub <- mydataSub[which(mydataSub$designation %in% rownames(Markers)),]
       if(nrow(mydataSub) == 0 & verbose){
         cat("There was no match between markers and phenotypes. Maybe your threshold to discard individuals has lead to remove from marker information all the individuals that are present in the phenotypic dataset.")
@@ -247,7 +250,7 @@ metLMM <- function(
             mydataSub$predictedValue <- mydataSub$predictedValue/mydataSub$reliability
           }
           if(!is.null(randomTerm)){
-            if(modelType == "rrblup"){
+            if(modelTypeTrait[iTrait] == "rrblup"){
               reduced <- with(mydataSub,sommer::redmm(x=designation,M=Mtrait, nPC=nPC, returnLam = TRUE))
               LGrp[["QTL"]] <- c((ncol(mydataSub)+1):(ncol(mydataSub)+ncol(reduced$Z)))
               mydataSub <- cbind(mydataSub,reduced$Z)
@@ -275,7 +278,7 @@ metLMM <- function(
           }else{residualByTrait=NULL}
           #####
           if(length(interactionsWithGenoTrait) > 0){ # If there's interactions to be fitted build the formula terms
-            if(modelType == "rrblup"){
+            if(modelTypeTrait[iTrait] == "rrblup"){
               for(iInteraction in unique(interactionsWithGenoTrait)){ # iInteraction <- unique(interactionsWithGenoTrait)[1]
                 LGrp[[paste0("QTL",iInteraction)]] <- c((ncol(mydataSub)+1):(ncol(mydataSub)+ncol(reduced$Z)))
                 mydataSub <- cbind(mydataSub, apply(reduced$Z,2,function(z){z*mydataSub[,iInteraction]}) ) # reduced$Z*mydataSub[,iInteraction])
@@ -313,7 +316,7 @@ metLMM <- function(
             cat(ranran,"\n")
           }
           
-          if( modelType == "blup" ){ # if user doesn't have any special model
+          if( modelTypeTrait[iTrait] == "blup" ){ # if user doesn't have any special model
             # make sure the matrix only uses the leves for individuals with data
             designationFlevels <- unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"])
             Ainv <- A <- diag(length(designationFlevels))
@@ -326,7 +329,7 @@ metLMM <- function(
             levelsInAinv <- colnames(Ainv)
             genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
           }else{
-            if(modelType == "rrblup"){ # if user will use the rrblup
+            if(modelTypeTrait[iTrait] == "rrblup"){ # if user will use the rrblup
               designationFlevels <- unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"])
               inter <- character()
               onlyInA <- character() # genotypes only present in A and not in dataset
@@ -334,10 +337,10 @@ metLMM <- function(
               myGinverse <- NULL
               groupTrait <- LGrp
               genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=designationFlevels, withMarkOnly=onlyInA)
-            }else if(modelType %in% "gblup"){ # if user wants to do a gblup, pblup or ssgblup model
+            }else if(modelTypeTrait[iTrait] %in% "gblup"){ # if user wants to do a gblup, pblup or ssgblup model
               designationFlevels <- as.character(unique(mydataSub[which(!is.na(mydataSub[,"predictedValue"])),"designation"]))
               
-              if(modelType %in% c("pblup","ssgblup")){ # we need to calculate NRM
+              if(modelTypeTrait[iTrait] %in% c("pblup","ssgblup")){ # we need to calculate NRM
                 paramsPed <- phenoDTfile$metadata$pedigree
                 if(length(intersect(paramsPed$value, colnames(phenoDTfile$data$pedigree)))  < 3){
                   stop("Metadata for pedigree (mapping) and pedigree frame do not match. Please reupload and map your pedigree information.", call. = FALSE)
@@ -348,47 +351,74 @@ metLMM <- function(
                                      sireCol = paramsPed[paramsPed$parameter=="father","value"]
                 )
               }
-              if(modelType %in% c("gblup","ssgblup")){ # we need to calculate GRM
+              if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){ # we need to calculate GRM
                 commonBetweenMandP <- intersect(rownames(Markers),designationFlevels)
-                if(length(commonBetweenMandP) < 2){ stop("Markers could not be matched with phenotypes. Please ensure that you have used the right marker file or check the rownames of your marker matrix and ids of your phenotypes.", call. = FALSE)                }
-                M <- Markers[commonBetweenMandP,]
-                if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
-                  A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
-                }else{ A <- sommer::A.mat(M) };  M <- NULL
-                if(modelType == "ssgblup"){ # only if ssgblup we merge
-                  A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
+                if(length(commonBetweenMandP) < 2){ 
+                  commonBetweenMandPInOriginal <- intersect(rownames(phenoDTfile$data$geno),designationFlevels)
+                  if(length(commonBetweenMandPInOriginal) > 2){
+                    warning(paste("Markers could not be matched with phenotypes for trait", iTrait," because marker QA filtering removed the markers for those individuals. A classical BLUP model will be fitted for this trait."), call. = FALSE)   
+                    failedMarkerModel=TRUE
+                  }else{
+                    warning(paste("Markers could not be matched with phenotypes for trait", iTrait,". Please ensure that you have used the right marker file or check the rownames of your marker matrix and ids of your phenotypes. A classical BLUP model will be fitted for this trait."), call. = FALSE)              
+                  }
                 }
+                # print(failedMarkerModel)
+                if(failedMarkerModel){
+                  modelTypeTrait[iTrait] <- "blup"
+                  toFixFailure <- na.omit(unique(mydataSub[,"designation"]))
+                  A <- diag(length(toFixFailure)); colnames(A) <- rownames(A) <- toFixFailure
+                  Ainv <- A
+                  onlyInA <- character() # only had marker data
+                  differ <- toFixFailure # character()
+                  genoMetaData <- list(withMarkandPheno=character(), withPhenoOnly=differ, withMarkOnly=onlyInA )
+                }else{
+                  M <- Markers[commonBetweenMandP,]
+                  if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
+                    A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
+                  }else{ A <- sommer::A.mat(M) };  M <- NULL
+                  if(modelTypeTrait[iTrait] == "ssgblup"){ # only if ssgblup we merge
+                    A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
+                  }
+                }
+                
               }
-              if(modelType %in% c("pblup")){ A <- N  }
-              
-              badGeno <- which(rownames(A) == "") # should have no covariance with anyone
-              if(length(badGeno) > 0){A[badGeno,2:ncol(A)]=0; A[2:nrow(A),badGeno]=0} # make zero covariance with this genotype
-              badBlankGenotype <- which(colnames(A)=="")
-              if(length(badBlankGenotype) > 0){A <- A[-badBlankGenotype,-badBlankGenotype]}
-              inter <- intersect(designationFlevels,colnames(A)) # go for sure
-              if(modelType %in% c("gblup","ssgblup")){
-                onlyInA <- setdiff(rownames(Markers),designationFlevels)
+              if(modelTypeTrait[iTrait] %in% c("pblup")){ A <- N  }
+              if(!failedMarkerModel){
+                badGeno <- which(rownames(A) == "") # should have no covariance with anyone
+                if(length(badGeno) > 0){A[badGeno,2:ncol(A)]=0; A[2:nrow(A),badGeno]=0} # make zero covariance with this genotype
+                badBlankGenotype <- which(colnames(A)=="")
+                if(length(badBlankGenotype) > 0){A <- A[-badBlankGenotype,-badBlankGenotype]}
+                inter <- intersect(designationFlevels,colnames(A)) # go for sure
+                if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){
+                  onlyInA <- setdiff(rownames(Markers),designationFlevels)
+                }else{
+                  onlyInA <- setdiff(rownames(A),designationFlevels)
+                }
+                differ <- setdiff(designationFlevels,inter) # are missing in A matrix
+                genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=differ, withMarkOnly=onlyInA)
+                # get inverse matrix
+                if(length(inter) > 0){ #
+                  A1inv <- solve(A[inter,inter] + diag(tolParInv,length(inter), length(inter)))
+                }else{A1inv <- matrix(0,0,0)}
+                if(length(differ) > 0){ # we have to add individuals without markers or not being part of the GRM?
+                  if(length(differ) > 1){ # there's at least 2 inds to be added
+                    A2inv <- diag(x=rep(mean(diag(A1inv)),length(differ)))
+                  }else{ A2inv <- diag(1)*mean(diag(A1inv)) } # there's only one individual to be added
+                  colnames(A2inv) <- rownames(A2inv) <- differ
+                }else{A2inv <- matrix(0,0,0)}
+                Ainv <- sommer::adiag1(A1inv,A2inv)
+                Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
+                colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
+                A1inv <- NULL; A2inv <- NULL;
+                levelsInAinv <- colnames(Ainv)
+                myGinverse <- list(designation=Ainv)
               }else{
-                onlyInA <- setdiff(rownames(A),designationFlevels)
+                levelsInAinv <- colnames(Ainv)
+                myGinverse <- list(designation=Ainv)
               }
-              differ <- setdiff(designationFlevels,inter) # are missing in A matrix
-              genoMetaData <- list(withMarkandPheno=inter, withPhenoOnly=differ, withMarkOnly=onlyInA)
-              # get inverse matrix
-              if(length(inter) > 0){ #
-                A1inv <- solve(A[inter,inter] + diag(tolParInv,length(inter), length(inter)))
-              }else{A1inv <- matrix(0,0,0)}
-              if(length(differ) > 0){ # we have to add individuals without markers or not being part of the GRM?
-                if(length(differ) > 1){ # there's at least 2 inds to be added
-                  A2inv <- diag(x=rep(mean(diag(A1inv)),length(differ)))
-                }else{ A2inv <- diag(1)*mean(diag(A1inv)) } # there's only one individual to be added
-                colnames(A2inv) <- rownames(A2inv) <- differ
-              }else{A2inv <- matrix(0,0,0)}
-              Ainv <- sommer::adiag1(A1inv,A2inv)
-              Ainv[lower.tri(Ainv)] <- t(Ainv)[lower.tri(Ainv)] # fill the lower triangular
-              colnames(Ainv) <- rownames(Ainv) <- c(colnames(A1inv), colnames(A2inv))
-              A1inv <- NULL; A2inv <- NULL;
-              levelsInAinv <- colnames(Ainv)
-              myGinverse <- list(designation=Ainv)
+              
+              
+              
             }else{ # blue model
               inter <- character()
               onlyInA <- character() # genotypes only present in A and not in dataset
@@ -423,7 +453,7 @@ metLMM <- function(
             ## save the modeling used
             currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
                                           parameter=c("fixedFormula","randomFormula","family","designationEffectType"), 
-                                          value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait], toupper(modelType) ))
+                                          value=c(fix,ifelse(returnFixedGeno,NA,ranran),traitFamily[iTrait], toupper(modelTypeTrait[iTrait]) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             ## save the environments used goodFields
             currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
@@ -439,7 +469,7 @@ metLMM <- function(
             iGenoUnit <- "designation" # in MET iGenoUnit is always "designation" only in STA we allow for different
             
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if(modelType == "rrblup"){ # user wants to predict using marker effects
+            if(modelTypeTrait[iTrait] == "rrblup"){ # user wants to predict using marker effects
               ##
               Mfull <- Markers
               if((ncol(Mfull) < nrow(Mfull)) | nPC==0){M2 <- Mfull}else{  M2 <- tcrossprod(Mfull)}
@@ -492,7 +522,7 @@ metLMM <- function(
                 ######################################################
                 ## do genetic evaluation only if there was genotype as random effect
                 ######################################################
-                if(modelType %in% c("gblup","ssgblup")){ # if user provided markers
+                if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){ # if user provided markers
                   allIndsNames <- rownames(Markers) # individuals in the marker matrix
                 }else{# if user provided relationship matrix
                   allIndsNames <- colnames(A) # individuals in the relationship matrix
@@ -522,7 +552,7 @@ metLMM <- function(
                   present <- unique(c( intersect(colnames(A), indNamesInAinv), iGrupNames ))
                   mydataSub2 <- mydataSub[which(!is.na(mydataSub$predictedValue)),]
                   mydataSub2 <- droplevels(mydataSub2[which(mydataSub2$designation %in% c(present)),])
-                  if(modelType %in% c("gblup","ssgblup")){ # if user provided markers
+                  if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){ # if user provided markers
                     AGE <- sommer::A.mat(Markers[intersect(present,rownames(Markers)),])
                   }else{
                     present2 <- intersect(colnames(A),present)
@@ -658,7 +688,7 @@ metLMM <- function(
             ###%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
           }else{ # if model failed
-            if(modelType == "rrblup"){
+            if(modelTypeTrait[iTrait] == "rrblup"){
               cat(paste("Model failed for trait:", iTrait))
             }else{
               if(verbose){ cat(paste("Mixed model failed for this combination. Aggregating and assuming h2 = 0 \n"))}
@@ -699,10 +729,10 @@ metLMM <- function(
               return(x2)
             })
             mydataForEntryType <- NULL
-            if(modelType == "rrblup"){
+            if(modelTypeTrait[iTrait] == "rrblup"){
               pp$entryType <- ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"GEBV_tested", "GEBV_predicted")
             }else{
-              pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate),
+              pp$entryType <- paste(ifelse(as.character(pp$designation) %in% differ, "TGV", surrogate[modelTypeTrait[iTrait]]),
                                     pp$entryType,
                                     ifelse(as.character(pp$designation) %in% onlyInA, "predicted", "tested"),
                                     sep="_")
@@ -711,7 +741,7 @@ metLMM <- function(
             predictionsList[[counter2]] <- pp;
             counter=counter+1
           }
-          
+          failedMarkerModel=FALSE # reset if the trait model failed and was set to TRUE
         }
       }
     }

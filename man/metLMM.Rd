@@ -127,10 +127,12 @@ final <- metLMM(
     interactionsWithGeno=NULL, envsToInclude=NULL,
     trait= c("Plant_Height_cm", "Yield_Mg_ha"), traitFamily=NULL, useWeights=TRUE,
     heritLB= 0.15,  heritUB= 0.95,
+    meanLB=0, meanUB=Inf,
     modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
     nMarkersRRBLUP=1000,
     deregress=FALSE,  nPC=0,
     maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
+    minimumNumberEnvsFW=6,
     verbose=TRUE
 )
 tail(final$predictions)
