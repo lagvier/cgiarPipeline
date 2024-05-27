@@ -195,7 +195,7 @@ staLMM <- function(
                                           rcov=~at(environmentF):id(rowF):id(colF),
                                           dat=droplevels(mydataSub[which(!is.na(mydataSub[,"trait"])),]),
                                           
-                                          minRandomLevels=list(rowF= 3, colF=3, trialF=2,repF=2, blockF=4),
+                                          minRandomLevels=list(rowF= 3, colF=3, trialF=2,repF=2, iBlockF=4),
                                           minResidualLevels=list(rowF=5, colF=5),
                                           
                                           exchangeRandomEffects=list(rowF="colF", colF="rowF"),
