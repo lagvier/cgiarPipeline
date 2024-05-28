@@ -208,17 +208,19 @@ metLMM <- function(
         numericMetas <- names(metasClass)[which(metasClass %in% c("integer","numeric"))]
         # center variables
         for(iMeta in numericMetas){ # iMeta = numericMetas[9]
-          if( ( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0 ) & (length(which(!is.na(metas[,iMeta]))) > minimumNumberEnvsFW) ) { # only add if there is variation in this environmental covariate and we have enough data points
+          # only add if there is variation in this environmental covariate and we have enough data points
+          if( ( var(as.vector(metas[,iMeta]), na.rm=TRUE) > 0 ) & (length(which(!is.na(metas[,iMeta]))) > minimumNumberEnvsFW) ) { 
             metas[,iMeta] <- metas[,iMeta] - mean(metas[,iMeta], na.rm=TRUE) # scale(metas[,iMeta]) #  
-          }else{
+          }else{ # conditions are not met
             metas <- metas[,-which(colnames(metas) == iMeta), drop=FALSE]
-            print(paste(iMeta, "removed from trait", iTrait, "because doesn't met conditions of variance or minimum number of environments."))
+            if(iMeta %in% interactionsWithGeno ) {
+              warning(paste(iMeta, "removed from trait", iTrait, "because doesn't met conditions of variance or minimum number of environments."), call. = FALSE)
+            }
           }
         }
         metas <- metas[which(metas$environment %in% goodFields),, drop=FALSE]
-        # colnames(metas) <- cgiarBase::replaceValues(colnames(metas), Search = paste0("envIndex_", iTrait), Replace = "envIndex")
         if(ncol(metas) > 1){ # if we kept some variables merge
-          mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) # [,c("environment","envIndex")]
+          mydataSub <- merge(mydataSub,metas, by="environment", all.x = TRUE) 
         }
       }
       ## define the interactions to be used
@@ -634,9 +636,9 @@ metLMM <- function(
               lpv <- sum(mix$EDdf$Model[1:which(mix$EDdf$Term == "designation")])+1 # to be used as a starting point if random regression is requested
               # extract sensitivities if interaction is requested
               if(length(interactionsWithGenoTrait) > 0){ # if there's interactions
-                if( length(intersect(interactionsWithGenoTrait, c("envIndex","timePoint","latitude","longitude","altitude","weather1","weather2"))) > 0 ){
+                if( length(intersect(interactionsWithGenoTrait, c("envIndex","timePoint",numericMetas))) > 0 ){
                   
-                  for(iInteractionTrait in c("envIndex","timePoint","latitude","longitude","altitude","weather1","weather2")){ # iInteractionTrait="envIndex"
+                  for(iInteractionTrait in c("envIndex","timePoint",numericMetas)){ # iInteractionTrait="envIndex"
                     
                     if( (iInteractionTrait %in% interactionsWithGenoTrait) ){ # iInteractionTrait="envIndex"
                       
