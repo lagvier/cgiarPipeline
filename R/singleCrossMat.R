@@ -124,8 +124,13 @@ singleCrossMat <- function( # single cross matrix function
   if (is.null(object)) stop("No input file specified.")
   
   ## extract marker matrices and reference alleles
-  M1 <- object$data$geno
-  M2 <- object$data$geno
+  ped <- object$data$pedigree
+  metaPed <- object$metadata$pedigree
+  colnames(ped) <- cgiarBase::replaceValues(colnames(ped), Search = metaPed$value, Replace = metaPed$parameter )
+  cross <- unique(ped[,c("mother","father","designation")]); colnames(cross) <- c("Var1","Var2","hybrid")
+  
+  M1 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$mother)),]
+  M2 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$father)),]
   
   ############################
   ## first get all possible hybrids
@@ -133,12 +138,8 @@ singleCrossMat <- function( # single cross matrix function
     res1 <- build.HMM(M1, M2, 
                               return.combos.only = TRUE)
   }else{
-    ped <- object$data$pedigree
-    metaPed <- object$metadata$pedigree
-    colnames(ped) <- cgiarBase::replaceValues(colnames(ped), Search = metaPed$value, Replace = metaPed$parameter )
-    cross <- unique(ped[,c("mother","father","designation")]); colnames(cross) <- c("Var1","Var2","hybrid")
     possible <- apply(cross,1, function(x){
-      ifelse(x[1]%in%rownames(M1),1,0) + ifelse(x[2]%in%rownames(M1),1,0)
+      ifelse(x[1]%in%rownames(M1),1,0) + ifelse(x[2]%in%rownames(M2),1,0)
     })
     possible <- which(possible == 2)
     res1 <- list(data.used=cross[possible,]) 
