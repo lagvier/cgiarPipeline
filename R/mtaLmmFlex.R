@@ -322,13 +322,14 @@ mtaLmmFlex <- function(
                 provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
                 r2 <- provSe
                 for(iCol in 1:ncol(provSe)){r2[,iCol] <- (Vg[iCol] - provSe[,iCol])/Vg[iCol]}
-                provEffectsLong$stdError <- as.vector((provSe))
+                provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
                 # provEffectsLong$stdError <- unlist( lapply(SEs,function(x){x[,,]}) )
               }else{
-                provSe <- t(apply(SEs,3,function(x){diag(x)}))
+                provSe <- as.matrix(apply(SEs,3,function(x){diag(x)}))
+                if(ncol(provSe) > 1){ provSe <- t(provSe) } # only if a complex structure was fitted
                 r2 <- provSe
                 for(iCol in 1:ncol(provSe)){r2[,iCol] <- (Vg[iCol] - provSe[,iCol])/Vg[iCol]}
-                provEffectsLong$stdError <- as.vector((provSe))
+                provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
                 # provEffectsLong$stdError <- as.vector(t(apply(SEs,3,function(x){diag(x)})))
               }
               r2s[[iEffect]] <- apply(r2,2,function(x){mean(x, na.rm=TRUE)})
