@@ -131,27 +131,27 @@ singleCrossMat <- function( # single cross matrix function
   cross <- unique(ped[,c("mother","father","designation")]); colnames(cross) <- c("Var1","Var2","hybrid")
   
   # apply the QA modifications to the markers
-  # Markers <- object$data$geno
-  # if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id
-  #   if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data. Please go to the 'Markers QA/QC' module prior to run a gBLUP or rrBLUP model.", call. = FALSE)}
-  # }else{ # user provided a modifications Id
-  #   modificationsMarkers <- object$modifications$geno
-  #   theresMatch <- which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications)
-  #   if(length(theresMatch) > 0){ # there's a modification file after matching the Id
-  #     modificationsMarkers <- modificationsMarkers[theresMatch,]
-  #     Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
-  #   }else{ # there's no match of the modification file
-  #     if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
-  #   }
-  # }
+  Markers <- object$data$geno
+  if(is.null(analysisIdForGenoModifications)){ # user didn't provide a modifications id
+    if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and you have not provided a modifications table to impute the genotype data. Please go to the 'Markers QA/QC' module before performing your analysis.", call. = FALSE)}
+  }else{ # user provided a modifications Id
+    modificationsMarkers <- object$modifications$geno
+    theresMatch <- which(modificationsMarkers$analysisId %in% analysisIdForGenoModifications)
+    if(length(theresMatch) > 0){ # there's a modification file after matching the Id
+      modificationsMarkers <- modificationsMarkers[theresMatch,]
+      Markers <- cgiarBase::applyGenoModifications(M=Markers, modifications=modificationsMarkers)
+    }else{ # there's no match of the modification file
+      if(length(which(is.na(Markers))) > 0){stop("Markers have missing data and your Id didn't have a match in the modifications table to impute the genotype data.", call. = FALSE)}
+    }
+  }
   # Markers <- Markers[,sample(1:min(c(ncol(Markers), nMarkersRRBLUP)))] # don't use all the markers if goes beyond nK
   # Markers <- Markers - 1 # center markers now
   
-  # M1 <- Markers[which(rownames(Markers) %in% unique(ped$mother)),]
-  # M2 <- Markers[which(rownames(Markers) %in% unique(ped$father)),]
+  M1 <- Markers[which(rownames(Markers) %in% unique(ped$mother)),]
+  M2 <- Markers[which(rownames(Markers) %in% unique(ped$father)),]
   
-  M1 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$mother)),]
-  M2 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$father)),]
+  # M1 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$mother)),]
+  # M2 <- object$data$geno[which(rownames(object$data$geno) %in% unique(ped$father)),]
   
   ############################
   ## first get all possible hybrids
@@ -189,6 +189,13 @@ singleCrossMat <- function( # single cross matrix function
   }else{
     M <- matrix(NA, nrow=0, ncol=ncol(M1)); colnames(M) <- colnames(M1)
   }
+  
+  # add missing markers to computed hybrid matrix
+  missMarkers <- setdiff(colnames(object$data$geno),colnames(M))
+  addMarkers <- data.frame(matrix(NA,nrow = nrow(M), ncol = length(missMarkers)),row.names = rownames(M))
+  colnames(addMarkers) <- missMarkers
+  M <- cbind(M, addMarkers)
+  
   object$data$geno <- rbind(object$data$geno,M)
   # other tables
   object$status <- rbind( object$status, data.frame(module="scm", analysisId=analysisId))
