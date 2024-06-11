@@ -195,7 +195,7 @@ singleCrossMat <- function( # single cross matrix function
   addMarkers <- data.frame(matrix(NA,nrow = nrow(M), ncol = length(missMarkers)),row.names = rownames(M))
   colnames(addMarkers) <- missMarkers
   M <- cbind(M, addMarkers)
-  M <- M[order(rownames(M),]
+  M <- M[order(rownames(M)),]
 
   object$data$geno <- rbind(object$data$geno,M)
   # other tables
