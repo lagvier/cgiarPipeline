@@ -125,6 +125,7 @@ mtaLmmFlex <- function(
   ## met analysis
   ##############################
   ##############################
+  library(lme4breeding)
   allEnvironments <- na.omit(unique(mydata[,"environment"]))
   predictionsList <- list(); counter=counter2=1
   traitToRemove <- character()
@@ -288,7 +289,7 @@ mtaLmmFlex <- function(
             effs <- lme4breeding::ranef(mix, condVar=TRUE)
             intercept <- lme4::fixef(mix)[1]
             ## get variance components and fix names
-            vc <- VarCorr(mix); #print(vc,comp=c("Variance"))
+            vc <- lme4::VarCorr(mix); #print(vc,comp=c("Variance"))
             vars <- as.data.frame(vc)#unlist(lapply(vc, function(x){diag(x)}))
             for(iName in names(effs)){
               possibleNames <- paste0(iName,".",1:50)
