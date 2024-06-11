@@ -59,9 +59,15 @@ mtaLmmFlex <- function(
   if(sum(conditionsModel) == 0){modelType <- "blue"} # assign blue method if the user provided designation in the fixed part
   ############################
   # loading the dataset
-  mydata <- phenoDTfile$predictions #
-  if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
-  mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  # mydata <- phenoDTfile$predictions #
+  # if (nrow(mydata) < 2) stop("Not enough data is available to perform a multi trial analysis. Please perform an STA before trying to do an MET.", call. = FALSE)
+  # mydata <- mydata[which(mydata$analysisId %in% analysisId),]
+  
+  # add the other available columns to the dataset
+  ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
+  form <<- as.formula( paste("predictedValue", "~", ff$form)  )
+  mydata <<- ff$predictions
+  
   # if the user provides two ids with same trait and environments kill the job
   allTraitsInMyData <- unique(na.omit(mydata$trait))
   for(iTrait in allTraitsInMyData){ # iTrait = allTraitsInMyData[1]
@@ -73,10 +79,6 @@ mtaLmmFlex <- function(
       stop(paste( "You have selected multiple analysisId to be analyzed together but trait",iTrait,"has data for the same environments", paste(names(checkOnPreds)[badIdSelection], collapse =", ") ,"in the IDs provided.") , call. = FALSE)
     }
   }
-  # add the other available columns to the dataset
-  ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
-  form <- as.formula( paste("predictedValue", "~", ff$form)  )
-  mydata <- ff$predictions
   
   # some checks after filtering
   if(nrow(mydata)==0){stop("No match for this analysisId. Please correct.", call. = FALSE)}
@@ -134,6 +136,7 @@ mtaLmmFlex <- function(
     failedMarkerModel=FALSE
     # subset data
     mydataSub <- droplevels(mydata[which(mydata$trait == iTrait),])
+    mydataSub <- droplevels(mydataSub[which(!is.na(mydataSub$predictedValue)),])
     # 
     if(!is.null(envsToInclude)){
       goodFieldsUser = rownames(envsToInclude)[which(envsToInclude[,iTrait] > 0)]
@@ -246,18 +249,25 @@ mtaLmmFlex <- function(
           }else{
             mydataSub$w  <- 1#/(mydataSub$stdError^2) # add weights column
           }
-          
+          print(dim(mydataSub))
+          print(length(unique(mydataSub$designation)))
+          print(dim(A))
+          # print(form)
+          # print(A[1:4,1:4])
+          # mydataSub <<-mydataSub
+          A <<- A
+          save.image(file="strangeBug.RData")
           mix <- try(
-            lme4breeding::lmebreed(formula=form, 
+            lmebreed(formula=form, 
                                    family = NULL,  #REML = TRUE,
                                    # addmat=list(),
                                    start = NULL, verbose = TRUE,
-                                   weights = mydataSub$w,
+                                   # weights = mydataSub$w,
                                    # subset, na.action, offset,
                                    contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
                                    rotation=FALSE, coefOutRotation=8,
                                    relmat=list(designation=A),
-                                   control = lme4::lmerControl(
+                                   control = lmerControl(
                                      check.nobs.vs.nlev = "ignore",
                                      check.nobs.vs.rankZ = "ignore",
                                      check.nobs.vs.nRE="ignore"
@@ -265,7 +275,7 @@ mtaLmmFlex <- function(
                                    data = mydataSub),
             silent = TRUE
           )
-          
+          print(mix)
           # summary(mix)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
