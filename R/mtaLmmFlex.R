@@ -51,7 +51,7 @@ mtaLmmFlex <- function(
   meanUB <- rep(meanUB,length(trait))
   traitOrig <- trait
   
-  conditionsModel <- unlist( lapply(inputFormula, function(x){
+  conditionsModel <- unlist( lapply(inputFormulation, function(x){
     if( (!is.null(x$left)) & (x$center == "|" | x$center == "||") & (x$right=="designation") ){
       return(TRUE)
     }else{return(FALSE)}
