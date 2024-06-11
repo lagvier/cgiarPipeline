@@ -1,23 +1,22 @@
-\name{metLMM}
-\alias{metLMM}
+\name{mtaLmmFlex}
+\alias{mtaLmmFlex}
 
 \title{
 Multi-environmental trial analysis pipeline using LMM
 }
 \description{
-Perform the multi-trial genetic evaluation according to the Finlay-Wilkinson regression approach (see Details section).
+Perform the multi-trial genetic evaluation using a random regression approach (see Details section).
 }
 \usage{
-metLMM(
+mtaLmmFlex(
     phenoDTfile= NULL, analysisId=NULL,
     analysisIdForGenoModifications=NULL,
-    fixedTerm= c("environment"),  randomTerm=c("designation"),  residualBy=NULL,
-    interactionsWithGeno=NULL, envsToInclude=NULL,
+    inputFormulation=NULL, envsToInclude=NULL,
     trait= NULL, traitFamily=NULL, useWeights=TRUE,
-    heritLB= 0.15,  heritUB= 0.95, modelType="blup",
-    nMarkersRRBLUP=1000, deregress=FALSE,  nPC=0,
-    maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
-    minimumNumberEnvsFW=6, verbose=TRUE
+    heritLB= 0.15,  heritUB= 0.95, meanLB=0, meanUB=Inf,
+    modelType="blup", nMarkersRRBLUP=1000,
+    deregress=FALSE, maxIters=50, batchSizeToPredict=500, 
+    tolParInv=1e-4, verbose=TRUE
 )
 }
 
@@ -31,17 +30,8 @@ A numeric id to link to the predictions to be used for the analysis.
 \item{analysisIdForGenoModifications}{
 A numeric id to link to the modifications table to be used to modify the marker information in case the user fit an rrBLUP or GBLUP model.
 }
-\item{fixedTerm}{
-A character vector specifying the terms to be considered fixed.
-}
-\item{randomTerm}{
-A character vector specifying the terms to be considered random.
-}
-\item{residualBy}{
-A character vector specifying the term for which residuals should be fitted. For example, at the level of each environment.
-}
-\item{interactionsWithGeno}{
-A character vector specifying the covariates to be fitted as genotype by environment under the Finlay-Wilkinson approach.
+\item{inputFormulation}{
+A character vector specifying the terms to be considered in the formulation.
 }
 \item{envsToInclude}{
 A table of fields (rows) by traits (columns) to specify which fields should be included in the analysis for each trait.
@@ -70,9 +60,6 @@ Maximum number of markers that should be used if an rrBLUP genetic evaluation me
 \item{deregress}{
 A TRUE/FALSE value to decide is the STA predictions should be deregressed. Only to be used if you fitted BLUPs in the STA step.
 }
-\item{nPC}{
-Number of principal components for the big MET. If the value is equal to 0 the classical rrBLUP model is used. Otherwise a principal component model is run according to Odegard et al. (2019).
-}
 \item{maxIters}{
 Maximum number of restricted maximum likelihood iterations to be run for each trait.
 }
@@ -82,9 +69,6 @@ A numeric value indicating how many individuals should be predicted per batch at
 \item{tolParInv}{
 A numeric value to indicate the tolerance value to add when a matrix is not invertible.
 }
-\item{minimumNumberEnvsFW}{
-A numeric value indicating what is the minimum number of environments that should have weather or environmental indices information to be run in the Finlay-Wilkinson regression approach. The default is to have at least 6.
-}
 \item{verbose}{
 Should the logs or warninig messages of the analysis be printed?
 }
@@ -92,7 +76,7 @@ Should the logs or warninig messages of the analysis be printed?
 }
 \details{
 
-The core algorithm of the genetic evaluation using the two-step approach is the multi-trial analysis. This option aims to model breeding values across environments using the results from the single trial (weighted by the standard errors) analysis and optionally a relationship matrix between individuals. Genotype by environment is fitted using the Finlay-Wilkinson approach.
+The core algorithm of the genetic evaluation using the two-step approach is the multi-trial analysis. 
 
 }
 \value{
@@ -119,23 +103,6 @@ data(DT_example)
 result$status
 result$metadata$pheno
 
-final <- metLMM(
-    phenoDTfile= result, # analysis to be picked from predictions database
-    analysisId=result$status$analysisId[2],
-    analysisIdForGenoModifications=NULL,
-    fixedTerm= c("environment"),  randomTerm=c("designation"),  residualBy=NULL,
-    interactionsWithGeno=NULL, envsToInclude=NULL,
-    trait= c("Plant_Height_cm", "Yield_Mg_ha"), traitFamily=NULL, useWeights=TRUE,
-    heritLB= 0.15,  heritUB= 0.95,
-    meanLB=0, meanUB=Inf,
-    modelType="blup", # either "blup", "pblup", "gblup", "rrblup"
-    nMarkersRRBLUP=1000,
-    deregress=FALSE,  nPC=0,
-    maxIters=50, batchSizeToPredict=500, tolParInv=1e-4,
-    minimumNumberEnvsFW=6,
-    verbose=TRUE
-)
-tail(final$predictions)
 
 }
 
