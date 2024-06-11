@@ -249,20 +249,15 @@ mtaLmmFlex <- function(
           }else{
             mydataSub$w  <- 1#/(mydataSub$stdError^2) # add weights column
           }
-          print(dim(mydataSub))
-          print(length(unique(mydataSub$designation)))
-          print(dim(A))
-          # print(form)
-          # print(A[1:4,1:4])
-          # mydataSub <<-mydataSub
+          mydataSub <<-mydataSub
           A <<- A
-          save.image(file="strangeBug.RData")
+          # save.image(file="strangeBug.RData")
           mix <- try(
             lmebreed(formula=form, 
                                    family = NULL,  #REML = TRUE,
                                    # addmat=list(),
                                    start = NULL, verbose = TRUE,
-                                   # weights = mydataSub$w,
+                                   weights = mydataSub$w,
                                    # subset, na.action, offset,
                                    contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
                                    rotation=FALSE, coefOutRotation=8,
@@ -275,7 +270,7 @@ mtaLmmFlex <- function(
                                    data = mydataSub),
             silent = TRUE
           )
-          print(mix)
+          # print(mix)
           # summary(mix)
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
