@@ -15,6 +15,7 @@ mtaLmmFlex <- function(
 ){
   ## THIS FUNCTION PERFORMS A MULT TRIAL ANALYSIS USING LMM SOLVER
   mtaAnalysisId <- as.numeric(Sys.time())
+  '%!in%' <- function(x,y)!('%in%'(x,y)) 
   if(is.null(phenoDTfile)){stop("Please provide the phenotype file", call. = FALSE)}
   if(is.null(analysisId)){stop("Please provide the analysisId to be analyzed", call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
@@ -254,20 +255,20 @@ mtaLmmFlex <- function(
           # save.image(file="strangeBug.RData")
           mix <- try(
             lmebreed(formula=form, 
-                                   family = NULL,  #REML = TRUE,
-                                   # addmat=list(),
-                                   start = NULL, verbose = TRUE,
-                                   weights = mydataSub$w,
-                                   # subset, na.action, offset,
-                                   contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
-                                   rotation=FALSE, coefOutRotation=8,
-                                   relmat=list(designation=A),
-                                   control = lmerControl(
-                                     check.nobs.vs.nlev = "ignore",
-                                     check.nobs.vs.rankZ = "ignore",
-                                     check.nobs.vs.nRE="ignore"
-                                   ),
-                                   data = mydataSub),
+                     family = NULL,  #REML = TRUE,
+                     # addmat=list(),
+                     start = NULL, verbose = TRUE,
+                     weights = mydataSub$w,
+                     # subset, na.action, offset,
+                     contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
+                     rotation=FALSE, coefOutRotation=8,
+                     relmat=list(designation=A),
+                     control = lmerControl(
+                       check.nobs.vs.nlev = "ignore",
+                       check.nobs.vs.rankZ = "ignore",
+                       check.nobs.vs.nRE="ignore"
+                     ),
+                     data = mydataSub),
             silent = TRUE
           )
           # print(mix)
@@ -332,8 +333,16 @@ mtaLmmFlex <- function(
                 provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
                 # provEffectsLong$stdError <- as.vector(t(apply(SEs,3,function(x){diag(x)})))
               }
+              r2[which(r2 < 0, arr.ind = TRUE)]=0
               r2s[[iEffect]] <- apply(r2,2,function(x){mean(x, na.rm=TRUE)})
               provEffectsLong$reliability <- as.vector((r2))
+              # check if there is an across estimate, otherwise create it
+              if("(Intercept)" %!in% unique(provEffectsLong$environment) ){
+                ppa <- aggregate(cbind(predictedValue,stdError,reliability) ~ designation, FUN=mean, data=provEffectsLong)
+                ppa$environment <- "across"
+                provEffectsLong <- rbind(provEffectsLong,ppa[,colnames(provEffectsLong)])
+              }
+              # print(head(provEffectsLong))
               pp[[iEffect]] <- provEffectsLong
             }
             pp <- do.call(rbind,pp)
@@ -389,30 +398,34 @@ mtaLmmFlex <- function(
           #######################################
           #######################################
           #######################################
-          # Trait run is finished. If model worked well add entryType
-          if(!inherits(mix,"try-error") ){ 
-            pp$environment <- "across"
-            mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-            pp$entryType <- apply(data.frame(pp$designation),1,function(x){
-              found <- which(mydataForEntryType$designation %in% x)
-              if(length(found) > 0){
-                x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-              }else{x2 <- "unknown"}
-              return(x2)
-            })
-            mydataForEntryType <- NULL
-            if(modelTypeTrait[iTrait] == "rrblup"){
-              pp$entryType <- ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"GEBV_tested", "GEBV_predicted")
-            }else{
-              pp$entryType <- paste(ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
+          # Trait run is finished, add entryType
+          mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
+          pp$entryType <- apply(data.frame(pp$designation),1,function(x){
+            found <- which(mydataForEntryType$designation %in% x)
+            if(length(found) > 0){
+              x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
+            }else{x2 <- "unknown"}
+            return(x2)
+          })
+          mydataForEntryType <- NULL
+          if(!inherits(mix,"try-error") ){  # if model run OK
+            if(modelTypeTrait[iTrait] == "rrblup"){ # rrblup model
+              pp$entryType <- paste( "GEBV",
+                                     pp$entryType,
+                                     ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"tested", "predicted"),
+                                     sep="_")
+            }else{ # other model
+              pp$entryType <- paste( ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
                                     pp$entryType,
                                     ifelse(as.character(pp$designation) %in% setdiff(colnames(A), unique(mydataSub$designation) ), "predicted", "tested"), # 
                                     sep="_")
             }
-            ###
-            predictionsList[[counter2]] <- pp;
-            counter=counter+1
+          }else{ # if we just averaged
+            pp$entryType <- paste("average",pp$entryType,"tested", sep="_")
           }
+          ### save predictions
+          predictionsList[[counter2]] <- pp;
+          counter=counter+1
           failedMarkerModel=FALSE # reset if the trait model failed and was set to TRUE
         }
       }
