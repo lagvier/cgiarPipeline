@@ -25,9 +25,12 @@ indexDesire <- function(
   mydata <- mydata[which(mydata$trait %in% trait),]
   
   if(is.null(environmentToUse)){ environmentToUse <- names(sort(table(mydata$environment)))}
-  if(is.null(entryTypeToUse)){ entryTypeToUse <- names(sort(table(mydata$entryType)))}
   mydata <- mydata[which(mydata$environment %in% environmentToUse),]
-  mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+  if(is.null(entryTypeToUse)){ 
+    
+  }else{
+    mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+  }
   trait <- intersect(trait, unique(mydata$trait))
   desirev <- desirev[trait]
   ############################
