@@ -462,7 +462,7 @@ mtaLmmFlex <- function(
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
   phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
   ## add which data was used as input
-  modeling <- data.frame(module="mta",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
+  modeling <- data.frame(module="mtaFlex",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
   return(phenoDTfile)
