@@ -18,6 +18,7 @@ indexDesire <- function(
   if("mta"  %!in% moduleInput){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) != length(desirev)){stop("The number of traits and desirev values needs to be equal",call. = FALSE)}
+  names(desirev) <- trait
   ############################
   # loading the dataset
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
@@ -27,6 +28,8 @@ indexDesire <- function(
   if(is.null(entryTypeToUse)){ entryTypeToUse <- names(sort(table(mydata$entryType)))}
   mydata <- mydata[which(mydata$environment %in% environmentToUse),]
   mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
+  trait <- intersect(trait, unique(mydata$trait))
+  desirev <- desirev[trait]
   ############################
   # if the user provides two ids with same traits kill the job
   traitByIdCheck <- with(mydata, table(trait, analysisId))
@@ -55,7 +58,8 @@ indexDesire <- function(
   b <- MASS::ginv(G)%*%desirev # desired weights Ginv*d, equivalent to knowing w (economic weights)
   merit <- wide %*% b
   newped <- data.frame(analysisId=idxAnalysisId,trait="desireIndex",
-                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6, environment="across")
+                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6, 
+                       environment=paste(environmentToUse, collapse="_") )
   ##########################################
   ## add timePoint of origin, stage and designation code
   entries <- unique(mydata[,"designation"])
