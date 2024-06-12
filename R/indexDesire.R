@@ -1,6 +1,8 @@
 indexDesire <- function(
     phenoDTfile= NULL, # input data structure
     analysisId=NULL, # analysis to be picked from predictions database
+    environmentToUse=NULL,
+    entryTypeToUse=NULL,
     trait= NULL, # traits to include in the index
     desirev = NULL, # vector of desired values
     scaled=TRUE, # whether predicted values should be scaled or not
@@ -20,6 +22,11 @@ indexDesire <- function(
   # loading the dataset
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
+  
+  if(is.null(environmentToUse)){ environmentToUse <- names(sort(table(mydata$environment)))}
+  if(is.null(entryTypeToUse)){ entryTypeToUse <- names(sort(table(mydata$entryType)))}
+  mydata <- mydata[which(mydata$environment %in% environmentToUse),]
+  mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
   ############################
   # if the user provides two ids with same traits kill the job
   traitByIdCheck <- with(mydata, table(trait, analysisId))

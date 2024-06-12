@@ -291,6 +291,7 @@ mtaLmmFlex <- function(
             colnames(blues) <- c("predictedValue","stdError","tValue")
             blues$designation <- rownames(blues); blues$environment <- "across"
             blues$reliability <- NA
+            blues$entryType <- ""
             
             effs <- lme4breeding::ranef(mix, condVar=TRUE)
             intercept <- lme4::fixef(mix)[1]
@@ -342,6 +343,7 @@ mtaLmmFlex <- function(
                 ppa$environment <- "across"
                 provEffectsLong <- rbind(provEffectsLong,ppa[,colnames(provEffectsLong)])
               }
+              provEffectsLong$entryType <- iEffect
               # print(head(provEffectsLong))
               pp[[iEffect]] <- provEffectsLong
             }
@@ -379,6 +381,7 @@ mtaLmmFlex <- function(
             # pp$status <- "Aggregated"
             pp$reliability <- 1e-6
             pp$trait <- iTrait
+            pp$entryType <- ""
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
             ## save metrics
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
@@ -400,28 +403,29 @@ mtaLmmFlex <- function(
           #######################################
           # Trait run is finished, add entryType
           mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
-          pp$entryType <- apply(data.frame(pp$designation),1,function(x){
+          pp$entryType <- paste( pp$entryType,
+                                apply(data.frame(pp$designation),1,function(x){
             found <- which(mydataForEntryType$designation %in% x)
             if(length(found) > 0){
               x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
             }else{x2 <- "unknown"}
             return(x2)
-          })
+          }), sep = "_")
           mydataForEntryType <- NULL
           if(!inherits(mix,"try-error") ){  # if model run OK
             if(modelTypeTrait[iTrait] == "rrblup"){ # rrblup model
-              pp$entryType <- paste( "GEBV",
-                                     pp$entryType,
+              pp$entryType <- paste( pp$entryType,
+                                     "GEBV",
                                      ifelse(as.character(pp$designation) %in% rownames(Mtrait) ,"tested", "predicted"),
                                      sep="_")
             }else{ # other model
-              pp$entryType <- paste( ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
-                                    pp$entryType,
+              pp$entryType <- paste(pp$entryType,
+                                    ifelse(as.character(pp$designation) %in% setdiff( unique(mydataSub$designation), colnames(A) ), "TGV", surrogate[modelTypeTrait[iTrait]]),
                                     ifelse(as.character(pp$designation) %in% setdiff(colnames(A), unique(mydataSub$designation) ), "predicted", "tested"), # 
                                     sep="_")
             }
           }else{ # if we just averaged
-            pp$entryType <- paste("average",pp$entryType,"tested", sep="_")
+            pp$entryType <- paste(pp$entryType,"average","tested", sep="_")
           }
           ### save predictions
           predictionsList[[counter2]] <- pp;
