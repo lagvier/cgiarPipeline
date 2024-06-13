@@ -276,7 +276,7 @@ mtaLmmFlex <- function(
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
             ## save the model formula used
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c(as.character(form)[3],traitFamily[iTrait], toupper(modelTypeTrait[iTrait]) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -289,7 +289,7 @@ mtaLmmFlex <- function(
             blues <- as.data.frame(summary(mix)$coefficients)
             blues$Estimate <- lme4breeding::adjBeta(blues$Estimate)
             colnames(blues) <- c("predictedValue","stdError","tValue")
-            blues$designation <- rownames(blues); blues$environment <- "across"
+            blues$designation <- rownames(blues); blues$environment <- "(Intercept)"
             blues$reliability <- NA
             blues$entryType <- ""
             
@@ -340,7 +340,7 @@ mtaLmmFlex <- function(
               # check if there is an across estimate, otherwise create it
               if("(Intercept)" %!in% unique(provEffectsLong$environment) ){
                 ppa <- aggregate(cbind(predictedValue,stdError,reliability) ~ designation, FUN=mean, data=provEffectsLong)
-                ppa$environment <- "across"
+                ppa$environment <- "(Intercept)"
                 provEffectsLong <- rbind(provEffectsLong,ppa[,colnames(provEffectsLong)])
               }
               provEffectsLong$entryType <- iEffect
@@ -386,13 +386,13 @@ mtaLmmFlex <- function(
             ## save metrics
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
                                          data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
-                                                    environment="across",
+                                                    environment="(Intercept)",
                                                     parameter=c("mean","CV", "r2","Vg","Vr","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
                                                     value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve, length(goodFields) ),
                                                     stdError=c(0,0,0,0, 0,0 )
                                          )
             )
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="across",
+            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c( "None","None","mean" ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -465,5 +465,7 @@ mtaLmmFlex <- function(
   modeling <- data.frame(module="mtaFlex",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))
   phenoDTfile$modeling <- rbind(phenoDTfile$modeling, modeling[, colnames(phenoDTfile$modeling)])
+  rownames(phenoDTfile$metrics) <- NULL
+  rownames(phenoDTfile$modeling) <- NULL
   return(phenoDTfile)
 }
