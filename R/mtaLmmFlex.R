@@ -276,12 +276,12 @@ mtaLmmFlex <- function(
           if(!inherits(mix,"try-error") ){ # if random model runs well try the fixed model
             
             ## save the model formula used
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c(as.character(form)[3],traitFamily[iTrait], toupper(modelTypeTrait[iTrait]) ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
             ## save the environments used goodFields
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment=allEnvironments,
                                           parameter="includedInMta", 
                                           value=ifelse(allEnvironments%in%goodFields, TRUE, FALSE))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -293,7 +293,7 @@ mtaLmmFlex <- function(
             blues$reliability <- NA
             blues$entryType <- ""
             
-            effs <- lme4breeding::ranef(mix, condVar=TRUE)
+            effs <- lme4breeding::ranef(object=mix, condVar=TRUE)
             intercept <- lme4::fixef(mix)[1]
             ## get variance components and fix names
             vc <- lme4::VarCorr(mix); #print(vc,comp=c("Variance"))
@@ -352,22 +352,22 @@ mtaLmmFlex <- function(
             pp$trait <- iTrait # add trait
             
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("V.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("REML"),
                                                     value=vars[which( (is.na(vars$var2) )), "vcov"] ,
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("mean.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(means),NA ),
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("CV.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(cvs),NA ),
                                                     stdError=0
                                          ),
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= vars[which( (is.na(vars$var2) )), "var1"],
                                                     parameter=paste0("r2.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(r2s),NA ),
                                                     stdError=0
@@ -385,14 +385,14 @@ mtaLmmFlex <- function(
             cv <- (sd(pp$predictedValue,na.rm=TRUE)/mean(pp$predictedValue,na.rm=TRUE))*100
             ## save metrics
             phenoDTfile$metrics <- rbind(phenoDTfile$metrics,
-                                         data.frame(module="mta",analysisId=mtaAnalysisId, trait=iTrait,
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait,
                                                     environment="(Intercept)",
                                                     parameter=c("mean","CV", "r2","Vg","Vr","nEnv"), method=c("sum(x)/n","sd/mu","(G-PEV)/G","REML","REML","n"),
                                                     value=c(mean(pp$predictedValue, na.rm=TRUE), cv, 0, 0, Ve, length(goodFields) ),
                                                     stdError=c(0,0,0,0, 0,0 )
                                          )
             )
-            currentModeling <- data.frame(module="mta", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
+            currentModeling <- data.frame(module="mtaFlex", analysisId=mtaAnalysisId,trait=iTrait, environment="general",
                                           parameter=c("formula","family","designationEffectType"), 
                                           value=c( "None","None","mean" ))
             phenoDTfile$modeling <- rbind(phenoDTfile$modeling,currentModeling[,colnames(phenoDTfile$modeling)] )
@@ -455,12 +455,12 @@ mtaLmmFlex <- function(
     return(y)
   }))
   predictionsBind <- merge(predictionsBind,baseOrigin, by="designation", all.x=TRUE)
-  predictionsBind$module <- "mta"
+  predictionsBind$module <- "mtaFlex"
   #########################################
   ## update databases
   phenoDTfile$predictions <- rbind(phenoDTfile$predictions,
                                    predictionsBind[,colnames(phenoDTfile$predictions)])
-  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mta", analysisId=mtaAnalysisId))
+  phenoDTfile$status <- rbind( phenoDTfile$status, data.frame(module="mtaFlex", analysisId=mtaAnalysisId))
   ## add which data was used as input
   modeling <- data.frame(module="mtaFlex",  analysisId=mtaAnalysisId, trait=c("inputObject"), environment="general",
                          parameter= c("analysisId"), value= c(analysisId ))

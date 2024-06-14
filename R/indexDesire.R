@@ -15,7 +15,7 @@ indexDesire <- function(
   moduleInput <- phenoDTfile$status[which(phenoDTfile$status$analysisId %in% analysisId),"module"]
   if(length(moduleInput)==0){stop("The file provided doesn't have the analysisId required.",call. = FALSE)}
   '%!in%' <- function(x,y)!('%in%'(x,y))
-  if("mta"  %!in% moduleInput){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
+  if(moduleInput  %!in% c("mta","mtaFlex") ){stop("Index can only be calculated on results from a MET analysis using across environment predictions",call. = FALSE)}
   if(is.null(trait)){stop("Please provide traits to be analyzed", call. = FALSE)}
   if(length(trait) != length(desirev)){stop("The number of traits and desirev values needs to be equal",call. = FALSE)}
   names(desirev) <- trait
@@ -23,10 +23,10 @@ indexDesire <- function(
   # loading the dataset
   mydata <- phenoDTfile$predictions[which(phenoDTfile$predictions$analysisId %in% analysisId),] # readRDS(file.path(wd,"predictions",paste0(phenoDTfile)))
   mydata <- mydata[which(mydata$trait %in% trait),]
-  
+
   if(is.null(environmentToUse)){ environmentToUse <- names(sort(table(mydata$environment)))}
   mydata <- mydata[which(mydata$environment %in% environmentToUse),]
-  if(!is.null(entryTypeToUse)){ 
+  if(!is.null(entryTypeToUse)){
     if(length(setdiff(entryTypeToUse,"")) > 0){
       mydata <- mydata[which(mydata$entryType %in% entryTypeToUse),]
     }
@@ -36,7 +36,7 @@ indexDesire <- function(
   ############################
   # if the user provides two ids with same traits kill the job
   traitByIdCheck <- with(mydata, table(trait, analysisId))
-  traitByIdCheck <- traitByIdCheck/traitByIdCheck; 
+  traitByIdCheck <- traitByIdCheck/traitByIdCheck;
   checkOnPreds <- apply(traitByIdCheck,1,sum, na.rm=TRUE)
   badIdSelection <- which( checkOnPreds > 1)
   if(length(badIdSelection) > 0){
@@ -61,7 +61,7 @@ indexDesire <- function(
   b <- MASS::ginv(G)%*%desirev # desired weights Ginv*d, equivalent to knowing w (economic weights)
   merit <- wide %*% b
   newped <- data.frame(analysisId=idxAnalysisId,trait="desireIndex",
-                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6, 
+                       designation=wide0[,1], predictedValue=merit,stdError=1e-6,reliability=1e-6,
                        environment=paste(environmentToUse, collapse="_") )
   ##########################################
   ## add timePoint of origin, stage and designation code
