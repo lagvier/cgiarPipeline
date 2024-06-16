@@ -66,7 +66,6 @@ mtaLmmFlex <- function(
   
   # add the other available columns to the dataset
   ff <- cgiarBase::formLme4(input0=inputFormulation,object=phenoDTfile, analysisId=analysisId)      
-  form <<- as.formula( paste("predictedValue", "~", ff$form)  )
   mydata <<- ff$predictions
   
   # if the user provides two ids with same trait and environments kill the job
@@ -253,6 +252,7 @@ mtaLmmFlex <- function(
           mydataSub <<-mydataSub
           A <<- A
           # save.image(file="strangeBug.RData")
+          form <<- as.formula( paste("predictedValue", "~", ff$form[[iTrait]])  )
           mix <- try(
             lmebreed(formula=form, 
                      family = NULL,  #REML = TRUE,
@@ -321,7 +321,17 @@ mtaLmmFlex <- function(
               provEffectsLong$predictedValue <- provEffectsLong$predictedValue + intercept
               SEs <- attr(effs[[iEffect]], which="postVar")
               if(is.list(SEs)){
-                provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
+                
+                provSe <- do.call(cbind,
+                                  lapply(SEs, function(x){
+                                    se <- list()
+                                    for(k in 1:dim(x)[1]){
+                                      se[[k]] <- x[k,k,] # get the diagonal value of each column #apply(x[,,],3,function(y){y[k,k]})
+                                    }
+                                    return( do.call(cbind, se) )
+                                  })
+                )
+                # provSe <- do.call(cbind, lapply(SEs,function(x){x[,,]}))
                 r2 <- provSe
                 for(iCol in 1:ncol(provSe)){r2[,iCol] <- (Vg[iCol] - provSe[,iCol])/Vg[iCol]}
                 provEffectsLong$stdError <- sqrt( as.vector((provSe)) )
@@ -404,13 +414,13 @@ mtaLmmFlex <- function(
           # Trait run is finished, add entryType
           mydataForEntryType <- droplevels(mydata[which(mydata$trait == iTrait),])
           pp$entryType <- paste( pp$entryType,
-                                apply(data.frame(pp$designation),1,function(x){
-            found <- which(mydataForEntryType$designation %in% x)
-            if(length(found) > 0){
-              x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
-            }else{x2 <- "unknown"}
-            return(x2)
-          }), sep = "_")
+                                 apply(data.frame(pp$designation),1,function(x){
+                                   found <- which(mydataForEntryType$designation %in% x)
+                                   if(length(found) > 0){
+                                     x2 <- paste(sort(unique(toupper(trimws(mydataForEntryType[found,"entryType"])))), collapse = "#");
+                                   }else{x2 <- "unknown"}
+                                   return(x2)
+                                 }), sep = "_")
           mydataForEntryType <- NULL
           if(!inherits(mix,"try-error") ){  # if model run OK
             if(modelTypeTrait[iTrait] == "rrblup"){ # rrblup model
