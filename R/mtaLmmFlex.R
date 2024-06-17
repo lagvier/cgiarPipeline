@@ -53,7 +53,7 @@ mtaLmmFlex <- function(
   traitOrig <- trait
   
   conditionsModel <- unlist( lapply(inputFormulation, function(x){
-    if( (!is.null(x$left)) & (x$center == "|" | x$center == "||") & (x$right=="designation") ){
+    if( (!is.null(x$left)) & (x$center == "|" | x$center == "||") & ("designation" %in% x$right) ){
       return(TRUE)
     }else{return(FALSE)}
   }) )
@@ -311,9 +311,9 @@ mtaLmmFlex <- function(
               Vg <- vars[which((vars$grp == iEffect) & (is.na(vars$var2) )), "vcov"]
               provEffects <- as.data.frame(effs[[iEffect]]); 
               
-              means[[iEffect]] <- apply(provEffects,2,function(x){mean(x,na.rm=TRUE)})
+              means[[iEffect]] <- apply(provEffects+intercept,2,function(x){mean(x,na.rm=TRUE)})
               sds[[iEffect]] <- apply(provEffects,2,function(x){sd(x,na.rm=TRUE)})
-              cvs[[iEffect]] <- sds[[iEffect]] / means[[iEffect]]
+              cvs[[iEffect]] <- (sds[[iEffect]] / means[[iEffect]]) * 100
               
               provEffects$designation <- rownames(provEffects)
               provEffectsLong <- reshape(provEffects, idvar = "designation", varying = list(1:(ncol(provEffects)-1)),
