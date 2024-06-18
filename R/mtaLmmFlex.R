@@ -205,6 +205,7 @@ mtaLmmFlex <- function(
               }
               if(modelTypeTrait[iTrait] %in% c("gblup","ssgblup")){ # we need to calculate GRM
                 commonBetweenMandP <- intersect(rownames(Markers),designationFlevels)
+                withoutMarkers <- setdiff(designationFlevels, rownames(Markers))
                 if(length(commonBetweenMandP) < 2){ 
                   commonBetweenMandPInOriginal <- intersect(rownames(phenoDTfile$data$geno),designationFlevels)
                   if(length(commonBetweenMandPInOriginal) > 2){
@@ -221,11 +222,18 @@ mtaLmmFlex <- function(
                   A <- diag(length(toFixFailure)); colnames(A) <- rownames(A) <- toFixFailure
                 }else{
                   M <- Markers[commonBetweenMandP,]
-                  if(ncol(M) > 5000){ # we remove that many markers if a big snp chip
-                    A <- sommer::A.mat(M[,sample(1:ncol(M), 5000)])
+                  if(ncol(M) > nMarkersRRBLUP){ # we remove that many markers if a big snp chip
+                    A <- sommer::A.mat(M[,sample(1:ncol(M), nMarkersRRBLUP)])
                   }else{ A <- sommer::A.mat(M) };  M <- NULL
                   if(modelTypeTrait[iTrait] == "ssgblup"){ # only if ssgblup we merge
                     A <- sommer::H.mat(N,A, tau=1,  omega=1, tolparinv=1e-6)
+                  }
+                  A <- A + diag(1e-4, ncol(A), ncol(A))
+                  if(length(withoutMarkers) > 0){
+                    newNames <- c(colnames(A), withoutMarkers)
+                    Ax <- diag(length(withoutMarkers))*mean(diag(A)); 
+                    A <- bdiag(A, Ax)
+                    colnames(A) <- rownames(A) <- newNames
                   }
                 }
                 
@@ -249,10 +257,31 @@ mtaLmmFlex <- function(
           }else{
             mydataSub$w  <- 1#/(mydataSub$stdError^2) # add weights column
           }
-          mydataSub <<-mydataSub
-          A <<- A
+          
           # save.image(file="strangeBug.RData")
+          relmat <- list(designation=A)
           form <<- as.formula( paste("predictedValue", "~", ff$form[[iTrait]])  )
+          for(iVcov in 1:length(inputFormulation)){ # iVcov=1
+            if("designation" %in% inputFormulation[[iVcov]]$right){
+              toAdd <- setdiff(inputFormulation[[iVcov]]$right, "designation")
+              if(length(toAdd) > 0){
+                for(iTerm in toAdd){ # iTerm = toAdd[1]
+                  lvs <- unique(mydataSub[, iTerm])
+                  e <- which( inputFormulation[[iVcov]]$right == iTerm)
+                  d <- which( inputFormulation[[iVcov]]$right == "designation")
+                  E <- diag(length(lvs)); colnames(E) <- rownames(E) <- lvs
+                  if(e > d){
+                    A <- kronecker(A,E, make.dimnames = TRUE)
+                  }else{A <- kronecker(E,A, make.dimnames = TRUE)}
+                }
+              }
+              relmat <- list(A)
+              names(relmat) <- paste(inputFormulation[[iVcov]]$right, collapse = ":")
+            }
+          }
+          mydataSub <<-mydataSub
+          # A <<- A
+          relmat <<- relmat
           mix <- try(
             lmebreed(formula=form, 
                      family = NULL,  #REML = TRUE,
@@ -262,7 +291,7 @@ mtaLmmFlex <- function(
                      # subset, na.action, offset,
                      contrasts = NULL, dateWarning=TRUE, returnParams=FALSE,
                      rotation=FALSE, coefOutRotation=8,
-                     relmat=list(designation=A),
+                     relmat=relmat,#list(designation=A),
                      control = lmerControl(
                        check.nobs.vs.nlev = "ignore",
                        check.nobs.vs.rankZ = "ignore",
