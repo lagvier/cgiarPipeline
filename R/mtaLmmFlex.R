@@ -410,6 +410,9 @@ mtaLmmFlex <- function(
                                                     parameter=paste0("r2.", vars[which( (is.na(vars$var2) )), "grp"]), method=c("sum/n"),
                                                     value=c(unlist(r2s),NA ),
                                                     stdError=0
+                                         ),
+                                         data.frame(module="mtaFlex",analysisId=mtaAnalysisId, trait=iTrait, environment= "general",
+                                                    parameter="nEnv", method=c("n"), value= length(goodFields),stdError=0
                                          )
             )
             
