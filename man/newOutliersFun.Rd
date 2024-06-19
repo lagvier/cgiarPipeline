@@ -42,15 +42,15 @@ If arguments are properly specified the function returns:
 }
 }
 
-\references{
-
-Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C.
-
-McGill, R., Tukey, J. W. and Larsen, W. A. (1978). Variations of box plots. The American Statistician, 32, 12–16. doi:10.2307/2683468.
-
-Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.
-
-}
+# \references{
+# 
+# Tukey, J. W. (1977). Exploratory Data Analysis. Section 2C.
+# 
+# McGill, R., Tukey, J. W. and Larsen, W. A. (1978). Variations of box plots. The American Statistician, 32, 12–16. doi:10.2307/2683468.
+# 
+# Velleman, P. F. and Hoaglin, D. C. (1981). Applications, Basics and Computing of Exploratory Data Analysis. Duxbury Press.
+# 
+# }
 
 \examples{
 ####=========================================####
